@@ -1,0 +1,37 @@
+js/i18n.js
+  s_1949834f377b4e::t_55a799b234808d 1-131
+.gitignore
+  s_1949834f377b4e::t_f1f6b8b589317d 1-9
+data/scenes-index.js
+  s_1949834f377b4e::t_9ad3a2c00f2b23 1-34
+js/app.js
+  s_1949834f377b4e::t_f91f1e1d750164 1-311
+data/scenes/hotel-check-in.js
+  s_1949834f377b4e::t_f420c38d493a0f 1-125
+js/speech.js
+  s_1949834f377b4e::t_d66f0f33333327 1-118
+README.md
+  s_1949834f377b4e::t_8f98db15d4e0ca 1-62
+index.html
+  s_1949834f377b4e::t_d002e640d149f3 1-50
+css/style.css
+  s_1949834f377b4e::t_8dd07e83ffa6a3 1-206
+DEPLOY.md
+  s_1949834f377b4e::t_2d59c26876d6a3 1-53
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "41f521cb3d0c17ad48452d96d79edeca1de0b987",
+  "prompts": {},
+  "sessions": {
+    "s_1949834f377b4e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c26f9185-0f37-49c8-b39f-1b3f92c23093",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Zaza Zhang <zaza.zhang@zoom.us>"
+    }
+  }
+}
