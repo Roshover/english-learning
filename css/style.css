@@ -239,26 +239,23 @@ body {
 .btn-speak.inline { margin-left: 6px; font-size: 14px; opacity: .6; }
 .btn-speak.inline:hover { opacity: 1; }
 
-/* ---------- Per-sentence notes ---------- */
-.note-wrap { margin-top: 6px; display: flex; flex-direction: column; gap: 6px; max-width: 100%; }
-.turn.right .note-wrap { align-items: flex-end; }
-.turn.left .note-wrap { align-items: flex-start; }
-.note-btn {
-  border: 1px dashed var(--border); background: transparent; color: var(--text-faint);
-  padding: 4px 12px; border-radius: 999px; font-size: 12.5px; cursor: pointer; transition: all .15s;
+/* ---------- Per-sentence notes (compact icon + floating card) ---------- */
+.turn-role { display: inline-flex; align-items: center; gap: 6px; }
+.note-btn2 {
+  border: none; background: transparent; cursor: pointer; font-size: 13px; line-height: 1;
+  padding: 1px 4px; border-radius: 6px; opacity: .3; filter: grayscale(1); transition: all .15s;
 }
-.note-btn:hover { border-color: var(--primary); color: var(--primary); }
-.note-btn.hidden, .note-display.hidden, .note-editor.hidden,
+.note-btn2:hover { opacity: 1; filter: none; background: var(--surface-2); }
+.note-btn2.has-note { opacity: 1; filter: none; }
+.turn:hover .note-btn2 { opacity: .8; }
+.turn:hover .note-btn2.has-note { opacity: 1; }
+
+.note-card { max-width: 340px; }
+.note-card-title { font-size: 13px; font-weight: 700; flex: 1; }
+.note-card .note-text { font-size: 14px; white-space: pre-wrap; word-break: break-word; color: var(--text); }
+.note-card-hint { font-size: 11px; color: var(--text-faint); margin-top: 8px; text-align: right; }
+
 .note-save.hidden, .note-del.hidden { display: none; }
-.note-display {
-  background: #fff8e6; border: 1px solid #f2e2b8; border-radius: 12px;
-  padding: 8px 12px; max-width: 100%; cursor: pointer; text-align: left;
-}
-@media (prefers-color-scheme: dark) { .note-display { background: #2a2412; border-color: #4a3f1e; } }
-.note-display:hover { border-color: var(--accent); }
-.note-label { font-size: 11px; color: var(--text-faint); margin-bottom: 2px; }
-.note-text { font-size: 13.5px; white-space: pre-wrap; word-break: break-word; color: var(--text); }
-.note-editor { width: 100%; max-width: 440px; }
 .note-textarea {
   width: 100%; border: 1px solid var(--border); border-radius: 10px; padding: 9px 11px;
   font: inherit; font-size: 14px; resize: vertical; background: var(--surface); color: var(--text); outline: none;

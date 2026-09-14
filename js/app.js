@@ -90,12 +90,13 @@
       closeWordCard();
     }
   }
-  function positionCard() {
-    if (!wordCardEl || !wordCardAnchor) return;
-    var r = wordCardAnchor.getBoundingClientRect();
+  // 通用浮层定位：把 cardEl 放到 anchor 附近（放不下就翻到上方/贴边）
+  function placeCard(cardEl, anchor) {
+    if (!cardEl || !anchor) return;
+    var r = anchor.getBoundingClientRect();
     var cw = Math.min(320, window.innerWidth - 24);
-    wordCardEl.style.width = cw + 'px';
-    var ch = wordCardEl.offsetHeight;
+    cardEl.style.width = cw + 'px';
+    var ch = cardEl.offsetHeight;
     var top = r.bottom + 8;
     if (top + ch > window.innerHeight - 10) {
       var above = r.top - 8 - ch;
@@ -104,9 +105,10 @@
     var left = r.left;
     if (left + cw > window.innerWidth - 12) left = window.innerWidth - 12 - cw;
     if (left < 12) left = 12;
-    wordCardEl.style.top = top + 'px';
-    wordCardEl.style.left = left + 'px';
+    cardEl.style.top = top + 'px';
+    cardEl.style.left = left + 'px';
   }
+  function positionCard() { placeCard(wordCardEl, wordCardAnchor); }
   function repositionCard() { positionCard(); }
 
   function collocationRow(c) {
@@ -340,6 +342,7 @@
     if (!s) { location.hash = '#/'; return; }
     window.Speech.stop();
     closeWordCard();
+    closeNoteCard();
     currentScene = s;
     clear(app);
 
@@ -438,75 +441,107 @@
     var zhNode = el('div', { class: 'bubble-zh' + (showTranslation ? '' : ' hidden') }, [line.zh]);
 
     return el('div', { class: 'turn ' + side, 'data-index': index }, [
-      el('div', { class: 'turn-role' }, [pick(line.role)]),
+      el('div', { class: 'turn-role' }, [pick(line.role), buildNoteButton(currentScene.id, index)]),
       el('div', { class: 'bubble', onclick: function () {
         if (player) player.playDialogueIdx(index); else window.Speech.speak(line.en);
-      } }, [enNode, zhNode]),
-      buildNoteSection(currentScene.id, index)
+      } }, [enNode, zhNode])
     ]);
   }
 
-  // 逐句笔记：按钮 + 展示 + 内联编辑器（存 localStorage，刷新仍在）
-  function buildNoteSection(sceneId, index) {
-    var wrap = el('div', { class: 'note-wrap' });
-    var toggleBtn = el('button', { class: 'note-btn' }, []);
-    var display = el('div', { class: 'note-display' });
-    var editor = el('div', { class: 'note-editor hidden' });
-    var ta = el('textarea', { class: 'note-textarea', rows: '3', placeholder: t('notePlaceholder') });
+  // 逐句笔记：每句一个小 📝 图标；hover 预览、点击编辑，内容用浮层卡片显示（不占对话空间）
+  var noteCardEl = null, noteCardAnchor = null, noteCardMode = null, noteHoverTimer = null;
 
-    function refresh() {
-      var text = window.Notes.get(sceneId, index);
-      clear(display);
-      if (text) {
-        display.classList.remove('hidden');
-        display.appendChild(el('div', { class: 'note-label' }, ['📝 ' + t('myNote')]));
-        display.appendChild(el('div', { class: 'note-text' }, [text]));
-        toggleBtn.textContent = '✏️ ' + t('editNote');
-      } else {
-        display.classList.add('hidden');
-        toggleBtn.textContent = '📝 ' + t('addNote');
-      }
-    }
-    function updateEditorButtons() {
-      var hasText = ta.value.trim().length > 0;
-      saveBtn.classList.toggle('hidden', !hasText);              // 有输入才显示保存
-      delBtn.classList.toggle('hidden', !window.Notes.has(sceneId, index)); // 有已存笔记才显示删除
-    }
-    function openEditor(e) {
-      if (e) e.stopPropagation();
-      ta.value = window.Notes.get(sceneId, index);
-      editor.classList.remove('hidden');
-      display.classList.add('hidden');
-      toggleBtn.classList.add('hidden');
-      updateEditorButtons();
-      ta.focus();
-    }
-    function closeEditor() {
-      editor.classList.add('hidden');
-      toggleBtn.classList.remove('hidden');
-      refresh();
-    }
+  function closeNoteCard() {
+    if (noteHoverTimer) { clearTimeout(noteHoverTimer); noteHoverTimer = null; }
+    if (!noteCardEl) return;
+    if (noteCardEl.parentNode) noteCardEl.parentNode.removeChild(noteCardEl);
+    noteCardEl = null; noteCardAnchor = null; noteCardMode = null;
+    document.removeEventListener('click', onDocClickForNote, true);
+    window.removeEventListener('scroll', repositionNote, true);
+    window.removeEventListener('resize', repositionNote);
+  }
+  function onDocClickForNote(e) {
+    if (noteCardEl && !noteCardEl.contains(e.target) && !(e.target.closest && e.target.closest('.note-btn2'))) closeNoteCard();
+  }
+  function repositionNote() { placeCard(noteCardEl, noteCardAnchor); }
+  function scheduleHoverClose() {
+    if (noteCardMode !== 'view') return;
+    noteHoverTimer = setTimeout(function () { if (noteCardMode === 'view') closeNoteCard(); }, 180);
+  }
 
-    toggleBtn.addEventListener('click', openEditor);
-    display.addEventListener('click', openEditor);
+  // hover：只读预览
+  function openNoteView(anchor, sceneId, index) {
+    var text = window.Notes.get(sceneId, index);
+    if (!text) return;
+    closeNoteCard();
+    var card = el('div', { class: 'word-card note-card' }, [
+      el('div', { class: 'wc-head' }, [el('span', { class: 'note-card-title' }, ['📝 ' + t('myNote')])]),
+      el('div', { class: 'wc-body' }, [el('div', { class: 'note-text' }, [text])]),
+      el('div', { class: 'note-card-hint' }, [t('clickToEdit')])
+    ]);
+    card.addEventListener('mouseenter', function () { if (noteHoverTimer) { clearTimeout(noteHoverTimer); noteHoverTimer = null; } });
+    card.addEventListener('mouseleave', scheduleHoverClose);
+    card.addEventListener('click', function (e) { e.stopPropagation(); openNoteEdit(anchor, sceneId, index); });
+    document.body.appendChild(card);
+    noteCardEl = card; noteCardAnchor = anchor; noteCardMode = 'view';
+    placeCard(card, anchor);
+    window.addEventListener('scroll', repositionNote, true);
+    window.addEventListener('resize', repositionNote);
+  }
 
+  // 点击：可编辑
+  function openNoteEdit(anchor, sceneId, index) {
+    closeNoteCard();
+    var card = el('div', { class: 'word-card note-card' });
+    var ta = el('textarea', { class: 'note-textarea', rows: '4', placeholder: t('notePlaceholder') });
+    ta.value = window.Notes.get(sceneId, index);
     var saveBtn = el('button', { class: 'note-save' }, [t('save')]);
-    saveBtn.addEventListener('click', function (e) { e.stopPropagation(); window.Notes.set(sceneId, index, ta.value); closeEditor(); });
     var delBtn = el('button', { class: 'note-del' }, [t('del')]);
-    delBtn.addEventListener('click', function (e) { e.stopPropagation(); window.Notes.remove(sceneId, index); closeEditor(); });
     var cancelBtn = el('button', { class: 'note-cancel' }, [t('cancel')]);
-    cancelBtn.addEventListener('click', function (e) { e.stopPropagation(); closeEditor(); });
+    function upd() {
+      saveBtn.classList.toggle('hidden', !ta.value.trim());
+      delBtn.classList.toggle('hidden', !window.Notes.has(sceneId, index));
+    }
+    ta.addEventListener('input', upd);
+    saveBtn.addEventListener('click', function (e) { e.stopPropagation(); window.Notes.set(sceneId, index, ta.value); closeNoteCard(); if (anchor._refresh) anchor._refresh(); });
+    delBtn.addEventListener('click', function (e) { e.stopPropagation(); window.Notes.remove(sceneId, index); closeNoteCard(); if (anchor._refresh) anchor._refresh(); });
+    cancelBtn.addEventListener('click', function (e) { e.stopPropagation(); closeNoteCard(); });
+    card.appendChild(el('div', { class: 'wc-head' }, [
+      el('span', { class: 'note-card-title' }, ['📝 ' + t('myNote')]),
+      el('button', { class: 'wc-close', title: '关闭', onclick: function (e) { e.stopPropagation(); closeNoteCard(); } }, ['×'])
+    ]));
+    card.appendChild(el('div', { class: 'wc-body' }, [ta, el('div', { class: 'note-actions' }, [saveBtn, delBtn, cancelBtn])]));
+    document.body.appendChild(card);
+    noteCardEl = card; noteCardAnchor = anchor; noteCardMode = 'edit';
+    placeCard(card, anchor);
+    upd();
+    setTimeout(function () { ta.focus(); }, 0);
+    setTimeout(function () {
+      document.addEventListener('click', onDocClickForNote, true);
+      window.addEventListener('scroll', repositionNote, true);
+      window.addEventListener('resize', repositionNote);
+    }, 0);
+  }
 
-    ta.addEventListener('input', updateEditorButtons);
-
-    editor.appendChild(ta);
-    editor.appendChild(el('div', { class: 'note-actions' }, [saveBtn, delBtn, cancelBtn]));
-
-    wrap.appendChild(toggleBtn);
-    wrap.appendChild(display);
-    wrap.appendChild(editor);
-    refresh();
-    return wrap;
+  function buildNoteButton(sceneId, index) {
+    var btn = el('button', { class: 'note-btn2' }, ['📝']);
+    btn._refresh = function () {
+      var has = window.Notes.has(sceneId, index);
+      btn.classList.toggle('has-note', has);
+      btn.title = has ? t('editNote') : t('addNote');
+    };
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      if (noteCardMode === 'edit' && noteCardAnchor === btn) { closeNoteCard(); return; } // 再点收起
+      openNoteEdit(btn, sceneId, index);
+    });
+    btn.addEventListener('mouseenter', function () {
+      if (noteCardMode === 'edit') return;
+      if (window.Notes.has(sceneId, index)) openNoteView(btn, sceneId, index);
+    });
+    btn.addEventListener('mouseleave', scheduleHoverClose);
+    btn._refresh();
+    return btn;
   }
 
   function buildControls(scene) {
@@ -781,6 +816,7 @@
     var hash = location.hash || '#/';
     window.Speech.stop();
     closeWordCard();
+    closeNoteCard();
     if (hash.indexOf('#/scene/') === 0) {
       var rest = hash.slice('#/scene/'.length).split('/');
       renderScene(rest[0], rest[1]);
