@@ -16,6 +16,9 @@
   // 场景页：是否显示中文（默认跟随界面语言）
   var showTranslation = window.I18N.getLang() === 'zh';
 
+  // 当前场景页的逐句播放器（由 buildControls 创建）
+  var player = null;
+
   // ---------- 工具 ----------
   function el(tag, attrs, children) {
     var node = document.createElement(tag);
@@ -182,8 +185,9 @@
     // 词汇预习（可折叠）
     app.appendChild(buildVocabPanel(s));
 
-    // 控制条
+    // 控制条（含逐句播放器）
     var controls = buildControls(s);
+    player = controls.player;
     app.appendChild(controls.node);
 
     // 对话
@@ -253,42 +257,90 @@
 
     return el('div', { class: 'turn ' + side, 'data-index': index }, [
       el('div', { class: 'turn-role' }, [pick(line.role)]),
-      el('div', { class: 'bubble', onclick: function () { window.Speech.speak(line.en); } },
-        [enNode, zhNode])
+      el('div', { class: 'bubble', onclick: function () {
+        if (player) player.playDialogueIdx(index); else window.Speech.speak(line.en);
+      } }, [enNode, zhNode])
     ]);
   }
 
   function buildControls(scene) {
     var linesRef = null;
 
-    // 连读 / 停止
-    var playBtn = el('button', { class: 'ctrl-btn primary' }, ['▶ ' + t('playAll')]);
-    var playing = false;
-    function resetPlay() {
-      playing = false;
-      playBtn.textContent = '▶ ' + t('playAll');
-      playBtn.classList.remove('active');
-      if (linesRef) linesRef.querySelectorAll('.turn.speaking').forEach(function (n) { n.classList.remove('speaking'); });
+    // 可朗读的对话行（跳过分节标题）在 dialogue 中的原始下标
+    var playable = [];
+    (scene.dialogue || []).forEach(function (d, i) { if (d.en) playable.push(i); });
+
+    // ---- 逐句练习播放器状态 ----
+    var pos = 0;              // 指向 playable 的下标（第几句）
+    var loopOne = false;     // 单句循环开关
+    var gen = 0;             // 代际守卫：新操作让旧的播放回调失效
+    var singlePlaying = false;
+    var playLineBtn;         // 前置声明，updateLineBtn 会用到
+
+    function highlight(dialogueIdx, speaking) {
+      if (!linesRef) return;
+      linesRef.querySelectorAll('.turn.speaking').forEach(function (n) { n.classList.remove('speaking'); });
+      linesRef.querySelectorAll('.turn.current').forEach(function (n) { n.classList.remove('current'); });
+      var cur = linesRef.querySelector('.turn[data-index="' + dialogueIdx + '"]');
+      if (cur) {
+        cur.classList.add('current');
+        if (speaking) cur.classList.add('speaking');
+        cur.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
     }
-    playBtn.addEventListener('click', function () {
-      if (playing) { window.Speech.stop(); resetPlay(); return; }
-      playing = true;
-      playBtn.textContent = '■ ' + t('stop');
-      playBtn.classList.add('active');
-      // 只朗读真正的对话行，跳过分节标题
-      var sentences = (scene.dialogue || []).filter(function (d) { return d.en; }).map(function (d) { return d.en; });
-      // 建立“朗读序号 → dialogue 原始 index”的映射用于高亮
-      var map = [];
-      (scene.dialogue || []).forEach(function (d, i) { if (d.en) map.push(i); });
+
+    function updateLineBtn() {
+      if (!playLineBtn) return;
+      playLineBtn.textContent = singlePlaying ? ('⏹ ' + t('stopLine')) : ('▶ ' + t('playLine'));
+      playLineBtn.classList.toggle('active', singlePlaying);
+    }
+
+    function playCurrent() {
+      if (!playable.length) return;
+      resetPlayAll();                 // 与“连读全部”互斥
+      gen++; var myGen = gen; singlePlaying = true; updateLineBtn();
+      var di = playable[pos];
+      highlight(di, true);
+      window.Speech.speak(scene.dialogue[di].en, function () {
+        if (myGen !== gen) return;    // 已被新操作取代，忽略
+        if (loopOne) {
+          setTimeout(function () { if (myGen === gen) playCurrent(); }, 500);
+        } else {
+          singlePlaying = false; highlight(di, false); updateLineBtn();
+        }
+      });
+    }
+    function stopSingle() { gen++; singlePlaying = false; window.Speech.stop(); updateLineBtn(); }
+    function toggleSingle() { if (singlePlaying) stopSingle(); else playCurrent(); }
+    function goPrev() { if (pos > 0) pos--; playCurrent(); }
+    function goNext() { if (pos < playable.length - 1) pos++; playCurrent(); }
+    function playDialogueIdx(di) { var p = playable.indexOf(di); if (p >= 0) { pos = p; playCurrent(); } }
+
+    // ---- 连读全部 ----
+    var playAllBtn = el('button', { class: 'ctrl-btn primary' }, ['▶ ' + t('playAll')]);
+    var playingAll = false;
+    function resetPlayAll() {
+      playingAll = false;
+      playAllBtn.textContent = '▶ ' + t('playAll');
+      playAllBtn.classList.remove('active');
+    }
+    playAllBtn.addEventListener('click', function () {
+      if (playingAll) { window.Speech.stop(); resetPlayAll(); return; }
+      stopSingle();
+      playingAll = true;
+      playAllBtn.textContent = '⏹ ' + t('stop');
+      playAllBtn.classList.add('active');
+      var sentences = playable.map(function (i) { return scene.dialogue[i].en; });
       window.Speech.speakSequence(sentences, function (seqIdx) {
-        if (!linesRef) return;
-        linesRef.querySelectorAll('.turn.speaking').forEach(function (n) { n.classList.remove('speaking'); });
-        var cur = linesRef.querySelector('.turn[data-index="' + map[seqIdx] + '"]');
-        if (cur) { cur.classList.add('speaking'); cur.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
-      }, resetPlay);
+        pos = seqIdx;                 // 让“上一句/下一句”从当前进度接续
+        highlight(playable[seqIdx], true);
+      }, function () {
+        resetPlayAll();
+        var di = playable[pos]; if (di != null) highlight(di, false);
+      });
     });
 
-    // 显示/隐藏中文
+    // ---- 显示/隐藏中文 ----
     var transBtn = el('button', { class: 'ctrl-btn' + (showTranslation ? ' active' : '') },
       [showTranslation ? t('hideTranslation') : t('showTranslation')]);
     transBtn.addEventListener('click', function () {
@@ -298,7 +350,21 @@
       if (linesRef) linesRef.querySelectorAll('.bubble-zh').forEach(function (n) { n.classList.toggle('hidden', !showTranslation); });
     });
 
-    // 语音选择器
+    // ---- 逐句练习：上一句 / 本句 / 下一句 / 单句循环 ----
+    var prevBtn = el('button', { class: 'ctrl-btn icon', title: t('prevLine') }, ['⏮']);
+    prevBtn.addEventListener('click', goPrev);
+    playLineBtn = el('button', { class: 'ctrl-btn' }, ['▶ ' + t('playLine')]);
+    playLineBtn.addEventListener('click', toggleSingle);
+    var nextBtn = el('button', { class: 'ctrl-btn icon', title: t('nextLine') }, ['⏭']);
+    nextBtn.addEventListener('click', goNext);
+    var loopBtn = el('button', { class: 'ctrl-btn' }, ['🔁 ' + t('loopOne')]);
+    loopBtn.addEventListener('click', function () {
+      loopOne = !loopOne;
+      loopBtn.classList.toggle('active', loopOne);
+      if (loopOne && !singlePlaying) playCurrent();   // 打开时立即开始循环当前句
+    });
+
+    // ---- 语音选择器 ----
     var voiceSel = el('select', { class: 'ctrl-select', title: t('voice') });
     function fillVoices(list) {
       clear(voiceSel);
@@ -307,30 +373,33 @@
         return;
       }
       var cur = window.Speech.getVoiceName();
+      var curStillValid = false;
       list.forEach(function (v) {
-        var label = v.name.replace(/ - .*/, '') + ' · ' + v.lang;
+        var label = v.name.replace(/ - .*/, '').replace(/^Google /, '') + ' · ' + v.lang;
         var opt = el('option', { value: v.name }, [label]);
-        if (v.name === cur) opt.selected = true;
+        if (v.name === cur) { opt.selected = true; curStillValid = true; }
         voiceSel.appendChild(opt);
       });
-      // 若用户没选过，默认选中排第一（最自然的那个）并写入
-      if (!cur && list[0]) { window.Speech.setVoiceName(list[0].name); voiceSel.value = list[0].name; }
+      // 没选过、或之前选的已被过滤掉：默认选第一（最自然的）
+      if ((!cur || !curStillValid) && list[0]) { window.Speech.setVoiceName(list[0].name); voiceSel.value = list[0].name; }
     }
     window.Speech.onVoicesReady(fillVoices);
     voiceSel.addEventListener('change', function () { window.Speech.setVoiceName(voiceSel.value); });
 
-    // 语速
-    var rateVal = el('span', { class: 'ctrl-val' }, [window.Speech.getRate().toFixed(1) + 'x']);
+    // ---- 语速 ----
+    var rateVal = el('span', { class: 'ctrl-val' }, [window.Speech.getRate().toFixed(2) + 'x']);
     var rate = el('input', { type: 'range', min: '0.5', max: '1.2', step: '0.05',
       value: String(window.Speech.getRate()), class: 'ctrl-range' });
     rate.addEventListener('input', function () {
       window.Speech.setRate(parseFloat(rate.value));
-      rateVal.textContent = parseFloat(rate.value).toFixed(1) + 'x';
+      rateVal.textContent = parseFloat(rate.value).toFixed(2) + 'x';
     });
 
     var node = el('div', { class: 'controls' }, [
-      el('div', { class: 'ctrl-row' }, [
-        playBtn, transBtn
+      el('div', { class: 'ctrl-row' }, [playAllBtn, transBtn]),
+      el('div', { class: 'ctrl-row secondary' }, [
+        el('span', { class: 'ctrl-label' }, ['🎧 ' + t('practice')]),
+        prevBtn, playLineBtn, nextBtn, loopBtn
       ]),
       el('div', { class: 'ctrl-row secondary' }, [
         el('div', { class: 'ctrl-group grow' }, [
@@ -342,7 +411,11 @@
       ])
     ]);
 
-    return { node: node, bind: function (lines) { linesRef = lines; } };
+    return {
+      node: node,
+      bind: function (lines) { linesRef = lines; },
+      player: { playDialogueIdx: playDialogueIdx }
+    };
   }
 
   // ---------- 路由 ----------

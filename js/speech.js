@@ -62,9 +62,14 @@
     return score;
   }
 
-  /** 返回排序后的英语语音列表（自然的排前面） */
+  /** 返回排序后的英语语音列表（自然的排前面）
+   *  优先只保留 Google 语音；若系统里没有 Google 语音（如 Safari），
+   *  则回退到全部英语语音，保证功能可用。 */
   function getEnglishVoices() {
-    var list = state.voices.slice();
+    var googles = state.voices.filter(function (v) {
+      return /google/i.test(v.name || '');
+    });
+    var list = (googles.length ? googles : state.voices).slice();
     list.sort(function (a, b) {
       var d = naturalScore(b) - naturalScore(a);
       if (d !== 0) return d;
@@ -100,12 +105,18 @@
     return u;
   }
 
-  function speak(text) {
-    if (!supported || !text) return;
+  /** 朗读单段文本；onEnd 在朗读结束（或出错）时回调，用于单句循环 */
+  function speak(text, onEnd) {
+    if (!supported || !text) { if (onEnd) onEnd(); return; }
     stop();
     // Safari 有时需要先 resume
     try { synth.resume(); } catch (e) {}
-    synth.speak(makeUtterance(text));
+    var u = makeUtterance(text);
+    if (onEnd) {
+      u.onend = function () { onEnd(); };
+      u.onerror = function () { onEnd(); };
+    }
+    synth.speak(u);
   }
 
   function speakSequence(sentences, onSentenceStart, onAllDone) {
