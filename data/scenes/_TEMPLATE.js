@@ -1,7 +1,7 @@
 /**
  * 场景模板 —— 复制本文件来新增一个场景。
  *
- * 三步（详见项目根目录 CONTENT_GUIDE.md）：
+ * 三步（详见项目根目录 SKILL.md）：
  *   1) 复制本文件为 data/scenes/<你的场景id>.js，例如 data/scenes/it-product-review.js
  *   2) 把下面两处 'REPLACE-scene-id' 改成同一个 id（必须和文件名一致）
  *   3) 在 data/scenes-index.js 里，把这个 id 加进某个分类的 sceneIds 数组

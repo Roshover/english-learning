@@ -50,7 +50,7 @@ node tools/build-dict.mjs          # 默认取前 15000 高频词，生成 data/
 
 ## ➕ 新增一个场景（两步，只改数据、不碰核心代码）
 
-> 详细规则见 **[CONTENT_GUIDE.md](CONTENT_GUIDE.md)**（也适合交给其他 AI 模型照着补内容）。
+> 详细规则见 **[SKILL.md](SKILL.md)**（让任何 AI 补内容前先读这个文件）。
 
 1. 复制模板 `data/scenes/_TEMPLATE.js` 为 `data/scenes/<你的id>.js`，填入内容（文件名 = 内部 `id`）。
 2. 在 `data/scenes-index.js` 里把 `<你的id>` 加进对应分类的 `sceneIds`。
@@ -93,7 +93,7 @@ english-learning/
 ├── tools/
 │   ├── build-dict.mjs    # 一次性构建离线词典（下载 ECDICT → 过滤 → 生成 dict-core.js）
 │   └── check-content.mjs # 内容自检（校验场景字段/清单）
-├── CONTENT_GUIDE.md      # 内容编写指南（给维护者 / AI 模型）
+├── SKILL.md              # 内容维护说明（补内容前让 AI 先读这个）
 ├── README.md
 └── DEPLOY.md
 ```
