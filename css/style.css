@@ -1,0 +1,206 @@
+/* ============================================================
+   实战英语 Real-Talk English — 样式
+   纯 CSS，无依赖。支持浅色/深色自动切换、移动端自适应。
+   ============================================================ */
+
+:root {
+  --bg: #f6f7fb;
+  --surface: #ffffff;
+  --surface-2: #f0f2f8;
+  --text: #1c2230;
+  --text-soft: #5b6478;
+  --text-faint: #8a93a6;
+  --primary: #3d5afe;
+  --primary-soft: #e8ecff;
+  --accent: #ff8f3f;
+  --border: #e6e9f2;
+  --shadow: 0 6px 24px rgba(24, 39, 75, 0.08);
+  --radius: 16px;
+  --radius-sm: 10px;
+  --guest: #3d5afe;
+  --guest-bg: #eef1ff;
+  --staff-bg: #f2f4f8;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f1420;
+    --surface: #171d2b;
+    --surface-2: #1e2536;
+    --text: #eaeef7;
+    --text-soft: #a7b0c4;
+    --text-faint: #7b8399;
+    --primary: #7c92ff;
+    --primary-soft: #212a44;
+    --accent: #ffa866;
+    --border: #262f43;
+    --shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
+    --guest: #7c92ff;
+    --guest-bg: #212a44;
+    --staff-bg: #1e2536;
+  }
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+    "Hiragino Sans GB", "Microsoft YaHei", Roboto, Helvetica, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap { width: 100%; max-width: 920px; margin: 0 auto; padding: 0 20px; }
+
+/* ---------- Header ---------- */
+.site-header {
+  position: sticky; top: 0; z-index: 20;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  backdrop-filter: saturate(1.4) blur(10px);
+  border-bottom: 1px solid var(--border);
+}
+.header-inner { display: flex; align-items: center; justify-content: space-between; height: 62px; }
+.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text); }
+.brand-logo { font-size: 26px; }
+.brand-text { display: flex; flex-direction: column; line-height: 1.1; }
+.brand-text strong { font-size: 17px; }
+.brand-text small { font-size: 11px; color: var(--text-faint); letter-spacing: .3px; }
+
+.btn-ghost {
+  border: 1px solid var(--border); background: var(--surface);
+  color: var(--text); padding: 7px 14px; border-radius: 999px;
+  font-size: 14px; cursor: pointer; text-decoration: none; display: inline-block;
+  transition: all .15s ease;
+}
+.btn-ghost:hover { border-color: var(--primary); color: var(--primary); }
+#langToggle { min-width: 46px; font-weight: 600; }
+
+/* ---------- Hero ---------- */
+.hero { padding: 40px 0 8px; }
+.hero-title { font-size: 30px; line-height: 1.25; margin: 0 0 10px; letter-spacing: -.5px; }
+.hero-sub { font-size: 16px; color: var(--text-soft); margin: 0; max-width: 640px; }
+.warn { margin-top: 14px; color: var(--accent); font-size: 14px; }
+
+.section-title { font-size: 15px; color: var(--text-faint); text-transform: uppercase;
+  letter-spacing: 1px; margin: 34px 0 8px; }
+
+/* ---------- Category & scene cards ---------- */
+.category { margin: 22px 0 34px; }
+.category-head { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+.category-icon { font-size: 30px; }
+.category-head h2 { margin: 0; font-size: 20px; }
+.category-desc { margin: 2px 0 0; color: var(--text-soft); font-size: 14px; }
+
+.scene-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+
+.scene-card {
+  display: flex; gap: 14px; padding: 18px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: var(--radius);
+  text-decoration: none; color: var(--text); box-shadow: var(--shadow);
+  transition: transform .15s ease, border-color .15s ease;
+}
+.scene-card:hover { transform: translateY(-3px); border-color: var(--primary); }
+.scene-icon { font-size: 32px; flex-shrink: 0; }
+.scene-meta h3 { margin: 0 0 4px; font-size: 17px; }
+.scene-meta p { margin: 0 0 10px; font-size: 14px; color: var(--text-soft);
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.scene-tag { font-size: 12px; color: var(--primary); background: var(--primary-soft);
+  padding: 3px 10px; border-radius: 999px; }
+.empty { color: var(--text-faint); font-size: 14px; padding: 20px; }
+
+/* ---------- Scene page ---------- */
+.scene-top { padding: 26px 0 6px; }
+.scene-title-block { margin-top: 16px; }
+.scene-title-block h1 { margin: 0 0 6px; font-size: 26px; }
+.scene-desc { margin: 0; color: var(--text-soft); font-size: 15px; }
+
+.panel {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 20px; margin: 18px 0;
+}
+.panel-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+  margin-bottom: 16px; flex-wrap: wrap; }
+.panel-head h2 { margin: 0; font-size: 18px; }
+.panel-hint { font-size: 12.5px; color: var(--text-faint); }
+
+/* Vocabulary */
+.vocab-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+.vocab-card { background: var(--surface-2); border-radius: var(--radius-sm); padding: 14px; }
+.vocab-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.vocab-word { font-size: 16px; font-weight: 700; }
+.vocab-phon { font-size: 13px; color: var(--text-faint); }
+.vocab-pos { font-size: 12px; color: var(--accent); font-style: italic; }
+.vocab-meaning { margin: 6px 0; font-size: 14.5px; }
+.vocab-example { font-size: 13px; color: var(--text-soft); }
+.ex-label { color: var(--text-faint); }
+.ex-en { font-style: italic; }
+
+/* Controls */
+.controls {
+  position: sticky; top: 62px; z-index: 10;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 14px;
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 12px 16px; margin: 18px 0;
+}
+.ctrl-group { display: flex; align-items: center; gap: 8px; }
+.ctrl-label { font-size: 13px; color: var(--text-faint); }
+.ctrl-val { font-size: 13px; color: var(--text-soft); min-width: 34px; }
+.ctrl-btn {
+  border: 1px solid var(--border); background: var(--surface); color: var(--text);
+  padding: 7px 14px; border-radius: 999px; font-size: 13.5px; cursor: pointer; transition: all .15s;
+}
+.ctrl-btn:hover { border-color: var(--primary); }
+.ctrl-btn.active { background: var(--primary-soft); border-color: var(--primary); color: var(--primary); }
+.ctrl-btn.primary { background: var(--primary); color: #fff; border-color: var(--primary); font-weight: 600; }
+.ctrl-btn.primary.active { background: var(--accent); border-color: var(--accent); }
+.ctrl-range { accent-color: var(--primary); width: 96px; }
+
+/* Dialogue */
+.dialogue { display: flex; flex-direction: column; gap: 16px; }
+.turn { display: flex; flex-direction: column; max-width: 84%; }
+.turn.left { align-self: flex-start; align-items: flex-start; }
+.turn.right { align-self: flex-end; align-items: flex-end; }
+.turn-role { font-size: 12px; color: var(--text-faint); margin: 0 6px 4px; }
+.bubble {
+  padding: 12px 16px; border-radius: 16px; cursor: pointer; transition: box-shadow .15s, transform .1s;
+  background: var(--staff-bg); border: 1px solid var(--border);
+}
+.turn.right .bubble { background: var(--guest-bg); border-color: transparent; }
+.bubble:hover { box-shadow: var(--shadow); }
+.turn.speaking .bubble { outline: 2px solid var(--primary); outline-offset: 2px; }
+.bubble-en { font-size: 16px; }
+.bubble-zh { font-size: 14px; color: var(--text-soft); margin-top: 6px;
+  border-top: 1px dashed var(--border); padding-top: 6px; }
+.bubble-zh.hidden { display: none; }
+
+.word { cursor: pointer; border-radius: 4px; padding: 0 1px; transition: background .1s; }
+.word:hover { background: var(--primary-soft); color: var(--primary); }
+
+.btn-speak {
+  border: none; background: transparent; cursor: pointer; font-size: 16px;
+  border-radius: 8px; padding: 2px 6px; line-height: 1;
+}
+.btn-speak:hover { background: var(--primary-soft); }
+.btn-speak.inline { margin-left: 6px; font-size: 14px; opacity: .7; }
+.btn-speak.inline:hover { opacity: 1; }
+
+/* ---------- Footer ---------- */
+.site-footer { border-top: 1px solid var(--border); margin-top: 40px; padding: 24px 0; }
+.site-footer .wrap { color: var(--text-faint); font-size: 13px; text-align: center; }
+
+/* ---------- Mobile ---------- */
+@media (max-width: 600px) {
+  .hero-title { font-size: 24px; }
+  .scene-grid, .vocab-grid { grid-template-columns: 1fr; }
+  .turn { max-width: 92%; }
+  .controls { top: 62px; gap: 10px; padding: 10px 12px; }
+  .ctrl-range { width: 72px; }
+}

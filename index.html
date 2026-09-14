@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>实战英语 · Real-Talk English</title>
+  <meta name="description" content="场景实战式英语学习：真实职场与旅行对话，点句子/单词即可朗读。" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap header-inner">
+      <a class="brand" href="#/" data-link>
+        <span class="brand-logo">🗣️</span>
+        <span class="brand-text">
+          <strong data-i18n="brandTitle">实战英语</strong>
+          <small data-i18n="brandSub">Real-Talk English</small>
+        </span>
+      </a>
+      <div class="header-actions">
+        <button id="langToggle" class="btn-ghost" title="切换语言 / Switch language">
+          <span data-i18n="langToggle">EN</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="app" class="wrap">
+    <!-- Views are rendered here by js/app.js -->
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <span data-i18n="footer">用真实场景练英语 · 点句子或单词即可朗读</span>
+    </div>
+  </footer>
+
+  <!-- App core -->
+  <script src="js/i18n.js"></script>
+  <script src="js/speech.js"></script>
+
+  <!-- Scene data (add one file per new scene, then register it below in data/scenes-index.js) -->
+  <script src="data/scenes/hotel-check-in.js"></script>
+  <script src="data/scenes-index.js"></script>
+
+  <!-- App -->
+  <script src="js/app.js"></script>
+</body>
+</html>
