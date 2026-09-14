@@ -6,11 +6,12 @@
   'use strict';
   var KEY = 'rte_notes';
 
+  var listeners = [];
   function read() {
     try { return JSON.parse(localStorage.getItem(KEY)) || {}; }
     catch (e) { return {}; }
   }
-  function write(o) { localStorage.setItem(KEY, JSON.stringify(o)); }
+  function write(o) { localStorage.setItem(KEY, JSON.stringify(o)); listeners.forEach(function (fn) { fn(); }); }
   function k(sceneId, idx) { return sceneId + ':' + idx; }
 
   function get(sceneId, idx) { return read()[k(sceneId, idx)] || ''; }
@@ -27,6 +28,21 @@
     for (var key in o) if (o.hasOwnProperty(key) && key.indexOf(pre) === 0) n++;
     return n;
   }
+  function count() { return Object.keys(read()).length; }
+  /** 列出全部笔记：[{sceneId, index, text}]（index 为数字） */
+  function all() {
+    var o = read(), out = [];
+    for (var key in o) {
+      if (!o.hasOwnProperty(key)) continue;
+      var pos = key.lastIndexOf(':');
+      out.push({ sceneId: key.slice(0, pos), index: parseInt(key.slice(pos + 1), 10), text: o[key] });
+    }
+    return out;
+  }
+  function onChange(fn) { listeners.push(fn); }
 
-  window.Notes = { get: get, has: has, set: set, remove: remove, countScene: countScene };
+  window.Notes = {
+    get: get, has: has, set: set, remove: remove,
+    countScene: countScene, count: count, all: all, onChange: onChange
+  };
 })();

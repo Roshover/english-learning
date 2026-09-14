@@ -335,7 +335,7 @@
   }
 
   // ---------- 场景页 ----------
-  function renderScene(id) {
+  function renderScene(id, lineIndex) {
     var s = getScene(id);
     if (!s) { location.hash = '#/'; return; }
     window.Speech.stop();
@@ -381,6 +381,18 @@
     app.appendChild(dialogueWrap);
 
     controls.bind(lines, s);
+
+    // 从复习中心「去该句」跳转过来：滚动到该句并闪一下
+    if (lineIndex != null && lineIndex !== '') {
+      setTimeout(function () {
+        var target = lines.querySelector('.turn[data-index="' + lineIndex + '"]');
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          target.classList.add('flash');
+          setTimeout(function () { target.classList.remove('flash'); }, 1600);
+        }
+      }, 60);
+    }
   }
 
   function buildVocabPanel(s) {
@@ -644,26 +656,59 @@
     };
   }
 
-  // ---------- 生词本 ----------
-  function renderWordbook() {
+  // ---------- 复习中心（生词本 + 笔记） ----------
+  var reviewTab = 'words'; // 'words' | 'notes'
+
+  function renderReview() {
     closeWordCard();
     currentScene = null;
     clear(app);
 
     app.appendChild(el('div', { class: 'scene-top' }, [
       el('a', { class: 'btn-ghost', href: '#/' }, ['← ' + t('backHome')]),
-      el('div', { class: 'scene-title-block' }, [el('h1', {}, ['⭐ ' + t('wordbook')])])
+      el('div', { class: 'scene-title-block' }, [el('h1', {}, ['📚 ' + t('reviewCenter')])])
     ]));
 
+    var body = el('div', { class: 'review-body' });
+
+    var tabs = el('div', { class: 'tabs review-tabs' });
+    [
+      { key: 'words', label: '⭐ ' + t('tabWords'), count: window.WordBook.count() },
+      { key: 'notes', label: '📝 ' + t('tabNotes'), count: window.Notes.count() }
+    ].forEach(function (td) {
+      var tab = el('button', { class: 'tab' + (reviewTab === td.key ? ' active' : '') }, [
+        el('span', {}, [td.label]),
+        el('span', { class: 'tab-count' }, [String(td.count)])
+      ]);
+      tab.addEventListener('click', function () {
+        reviewTab = td.key;
+        tabs.querySelectorAll('.tab').forEach(function (n) { n.classList.remove('active'); });
+        tab.classList.add('active');
+        renderReviewBody(body);
+      });
+      tabs.appendChild(tab);
+    });
+
+    app.appendChild(tabs);
+    app.appendChild(body);
+    renderReviewBody(body);
+  }
+
+  function renderReviewBody(body) {
+    clear(body);
+    if (reviewTab === 'notes') renderNotesList(body);
+    else renderWordList(body);
+  }
+
+  function renderWordList(body) {
     var items = window.WordBook.list();
     if (!items.length) {
-      app.appendChild(el('div', { class: 'empty-state' }, [
+      body.appendChild(el('div', { class: 'empty-state' }, [
         el('div', { class: 'empty-emoji' }, ['⭐']),
         el('p', {}, [t('wordbookEmpty')])
       ]));
       return;
     }
-
     var listEl = el('div', { class: 'wb-list' });
     items.forEach(function (e) {
       var row = el('div', { class: 'wb-item' }, [
@@ -678,13 +723,49 @@
         ]),
         el('button', { class: 'wb-remove', title: t('removeWord'), onclick: function () {
           window.WordBook.remove(e.word);
-          if (row.parentNode) row.parentNode.removeChild(row);
-          if (!window.WordBook.list().length) renderWordbook();
+          renderReviewBody(body);
         } }, ['🗑'])
       ]);
       listEl.appendChild(row);
     });
-    app.appendChild(listEl);
+    body.appendChild(listEl);
+  }
+
+  function renderNotesList(body) {
+    var items = window.Notes.all();
+    if (!items.length) {
+      body.appendChild(el('div', { class: 'empty-state' }, [
+        el('div', { class: 'empty-emoji' }, ['📝']),
+        el('p', {}, [t('notesEmpty')])
+      ]));
+      return;
+    }
+    // 按场景归组
+    items.sort(function (a, b) { return a.sceneId === b.sceneId ? a.index - b.index : a.sceneId.localeCompare(b.sceneId); });
+
+    var listEl = el('div', { class: 'wb-list' });
+    items.forEach(function (n) {
+      var scene = getScene(n.sceneId);
+      var line = scene && scene.dialogue ? scene.dialogue[n.index] : null;
+      var row = el('div', { class: 'nb-item' }, [
+        scene ? el('div', { class: 'nb-scene' }, [(scene.icon || '') + ' ' + pick(scene.title)]) : el('div', { class: 'nb-scene' }, [n.sceneId]),
+        line && line.en ? el('div', { class: 'nb-line' }, [
+          el('span', { class: 'nb-en' }, [line.en]),
+          el('button', { class: 'btn-speak', title: '朗读', onclick: function () { window.Speech.speak(line.en); } }, ['🔊'])
+        ]) : null,
+        line && line.zh ? el('div', { class: 'nb-zh' }, [line.zh]) : null,
+        el('div', { class: 'nb-note' }, [el('span', { class: 'nb-note-label' }, ['📝 ']), n.text]),
+        el('div', { class: 'nb-actions' }, [
+          el('a', { class: 'nb-link', href: '#/scene/' + n.sceneId + '/' + n.index }, ['→ ' + t('goToLine')]),
+          el('button', { class: 'wb-remove', title: t('removeWord'), onclick: function () {
+            window.Notes.remove(n.sceneId, n.index);
+            renderReviewBody(body);
+          } }, ['🗑'])
+        ])
+      ]);
+      listEl.appendChild(row);
+    });
+    body.appendChild(listEl);
   }
 
   // ---------- 路由 ----------
@@ -692,9 +773,14 @@
     var hash = location.hash || '#/';
     window.Speech.stop();
     closeWordCard();
-    if (hash.indexOf('#/scene/') === 0) renderScene(hash.slice('#/scene/'.length));
-    else if (hash.indexOf('#/wordbook') === 0) renderWordbook();
-    else renderHome();
+    if (hash.indexOf('#/scene/') === 0) {
+      var rest = hash.slice('#/scene/'.length).split('/');
+      renderScene(rest[0], rest[1]);
+    } else if (hash.indexOf('#/review') === 0 || hash.indexOf('#/wordbook') === 0) {
+      renderReview();
+    } else {
+      renderHome();
+    }
     window.scrollTo(0, 0);
   }
 
@@ -702,13 +788,14 @@
   window.I18N.onChange(function (lang) { showTranslation = (lang === 'zh'); router(); });
   window.addEventListener('hashchange', router);
 
-  // 生词本数量角标
-  function updateWordbookCount() {
-    var n = document.getElementById('wordbookCount');
-    if (n) n.textContent = String(window.WordBook.count());
+  // 复习中心数量角标（生词 + 笔记）
+  function updateReviewCount() {
+    var n = document.getElementById('reviewCount');
+    if (n) n.textContent = String(window.WordBook.count() + window.Notes.count());
   }
-  window.WordBook.onChange(updateWordbookCount);
-  updateWordbookCount();
+  window.WordBook.onChange(updateReviewCount);
+  window.Notes.onChange(updateReviewCount);
+  updateReviewCount();
 
   window.I18N.applyStaticText();
   router();
