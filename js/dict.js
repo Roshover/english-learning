@@ -192,6 +192,9 @@
     }).catch(function () { return null; });
   }
 
+  // 专有名词/不适合学习的词的中文释义特征
+  var PROPER_NOUN_RE = /^[a-z]?\.\s*[一-鿿]*[·•]|人名|地名|姓氏|城市|国家|州名|县名|岛名|山名|河名|湖名|海名|港名|纳粹|王朝|朝代/;
+
   /** 从离线字典随机抽 N 个单词。返回 [{word, phonetic, zh}] */
   function randomWords(count) {
     var dict = window.RTE_DICT;
@@ -200,7 +203,7 @@
     if (!keys.length) return [];
     var result = [];
     var used = {};
-    var maxAttempts = count * 10;
+    var maxAttempts = count * 20;
     var attempts = 0;
     while (result.length < count && attempts < maxAttempts) {
       attempts++;
@@ -209,9 +212,14 @@
       if (used[w]) continue;
       if (w.length < 3 || w.length > 15) continue;
       if (/[^a-z]/.test(w)) continue;
-      used[w] = true;
       var entry = dict[w];
-      result.push({ word: w, phonetic: entry[0] || '', zh: entry[1] || '' });
+      var zh = entry[1] || '';
+      // 过滤专有名词（人名、地名等）
+      if (PROPER_NOUN_RE.test(zh)) continue;
+      // 过滤纯名词解释里只有"某某人/某某地"的条目
+      if (/^n\.\s*$/.test(zh) || zh.length < 4) continue;
+      used[w] = true;
+      result.push({ word: w, phonetic: entry[0] || '', zh: zh });
     }
     return result;
   }
