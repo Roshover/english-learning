@@ -599,6 +599,7 @@
       playLineBtn.classList.toggle('active', singlePlaying);
     }
 
+    var loopTimer = null;
     function playCurrent() {
       if (!playable.length) return;
       resetPlayAll();                 // 与“连读全部”互斥
@@ -608,13 +609,22 @@
       window.Speech.speak(scene.dialogue[di].en, function () {
         if (myGen !== gen) return;    // 已被新操作取代，忽略
         if (loopOne) {
-          setTimeout(function () { if (myGen === gen) playCurrent(); }, 500);
+          loopTimer = setTimeout(function () { if (myGen === gen) playCurrent(); }, 500);
         } else {
           singlePlaying = false; highlight(di, false); updateLineBtn();
         }
       });
     }
-    function stopSingle() { gen++; singlePlaying = false; window.Speech.stop(); updateLineBtn(); }
+    function stopSingle() {
+      gen++; singlePlaying = false;
+      if (loopTimer) { clearTimeout(loopTimer); loopTimer = null; }
+      window.Speech.stop(); updateLineBtn();
+    }
+    // 离开页面/切换场景时“熄火”：作废回调 + 清掉待执行的循环定时器
+    function halt() {
+      gen++; singlePlaying = false; playingAll = false;
+      if (loopTimer) { clearTimeout(loopTimer); loopTimer = null; }
+    }
     function toggleSingle() { if (singlePlaying) stopSingle(); else playCurrent(); }
     function goPrev() { if (pos > 0) pos--; playCurrent(); }
     function goNext() { if (pos < playable.length - 1) pos++; playCurrent(); }
@@ -718,7 +728,7 @@
     return {
       node: node,
       bind: function (lines) { linesRef = lines; },
-      player: { playDialogueIdx: playDialogueIdx }
+      player: { playDialogueIdx: playDialogueIdx, halt: halt }
     };
   }
 
@@ -837,6 +847,7 @@
   // ---------- 路由 ----------
   function router() {
     var hash = location.hash || '#/';
+    if (player && player.halt) player.halt();  // 先熄火上一个场景的逐句播放器
     window.Speech.stop();
     closeWordCard();
     closeNoteCard();

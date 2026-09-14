@@ -24,6 +24,7 @@
     voices: [],
     playingAll: false
   };
+  var stopGen = 0; // 每次 stop() 自增，用于让“已作废”的朗读回调失效（避免单句循环停不下来）
 
   var voicesReadyCbs = [];
 
@@ -105,16 +106,18 @@
     return u;
   }
 
-  /** 朗读单段文本；onEnd 在朗读结束（或出错）时回调，用于单句循环 */
+  /** 朗读单段文本；onEnd 在朗读结束（或出错）时回调，用于单句循环。
+   *  onEnd 只有在这次朗读未被 stop() 作废时才触发。 */
   function speak(text, onEnd) {
     if (!supported || !text) { if (onEnd) onEnd(); return; }
-    stop();
+    stop();                 // 会让 stopGen 自增
+    var myGen = stopGen;
     // Safari 有时需要先 resume
     try { synth.resume(); } catch (e) {}
     var u = makeUtterance(text);
     if (onEnd) {
-      u.onend = function () { onEnd(); };
-      u.onerror = function () { onEnd(); };
+      u.onend = function () { if (myGen === stopGen) onEnd(); };
+      u.onerror = function () { if (myGen === stopGen) onEnd(); };
     }
     synth.speak(u);
   }
@@ -143,6 +146,7 @@
   function stop() {
     if (!supported) return;
     state.playingAll = false;
+    stopGen++;          // 让所有待触发的 onEnd 回调失效
     synth.cancel();
   }
 
