@@ -17,7 +17,9 @@
 ## 🤖 收到指令后必须按这个流程自动执行
 
 1. **读完本文件全部内容**，理解字段规范与铁律。
-2. **选分类**：根据主题选一个最合适的现有分类（旅游 / IT职场 / 日常生活…）；实在没有再新建分类。
+2. **选分类（决定放到哪个 tab）**：先看主题能否归入某个**现有分类**（旅游 / IT职场 / 日常生活…），能就用现有的；
+   实在都不合适，再**新建一个分类**——注意：分类就写在数据文件 `data/scenes-index.js` 里，属于允许编辑的范围，
+   **不算改源码**，首页 tab 会自动生成（具体见下方「➕ 新增一个分类（Tab）」）。
 3. **起 id**：由主题起一个小写连字符英文 id（如 `airport-checkin`）。
 4. **建文件**：复制 `data/scenes/_TEMPLATE.js` 为 `data/scenes/<id>.js`，把两处 `'REPLACE-scene-id'` 换成 `<id>`，按字段规范写入高质量内容（词汇 8–15 个、对话 15–30 句、用 `divider` 分段、中英一一对应）。
 5. **登记**：在 `data/scenes-index.js` 对应分类的 `sceneIds` 里加上 `<id>`。
@@ -74,7 +76,32 @@
 
 完成后刷新网页即可看到新场景——**朗读、逐句练习、点词释义、生词本、笔记、复习中心全部自动生效**。
 
-> 需要**全新分类**时，在 `categories` 数组里加一个 `{ key, name:{zh,en}, icon, desc:{zh,en}, sceneIds:[] }`。
+---
+
+## ➕ 新增一个分类（Tab）—— 仍然只改数据文件，不算改源码
+
+首页顶部的 tab（全部 / ✈️旅游 / 💼IT职场 / 🍽️日常生活…）**是根据 `data/scenes-index.js` 里的 `categories` 自动生成的**。
+想加一个新 tab，只需在 `data/scenes-index.js` 的 `categories` 数组里加一个分类对象即可，**不要动 `js/`、`css/`、`index.html`**。
+
+```js
+window.RTE_INDEX = {
+  categories: [
+    // …已有分类…
+    {
+      key: 'entertainment',                 // 唯一英文标识（小写），不能和已有 key 重复
+      name: { zh: '影音娱乐', en: 'Entertainment' },   // tab 显示名（双语）
+      icon: '🎬',                            // tab 图标（一个 emoji）
+      desc: { zh: '看电影、听音乐、聊剧集等场景', en: 'Movies, music, shows…' }, // 首页分类描述
+      sceneIds: ['movie-tickets']           // 该分类下的场景 id（可先放你新建的这个）
+    }
+  ]
+};
+```
+
+加完这个分类对象后，把你的场景文件（`data/scenes/movie-tickets.js`）建好，其 id 已在上面的 `sceneIds` 里，
+刷新页面首页就会**自动多出一个「🎬 影音娱乐」tab**，无需任何额外改动。
+
+**什么时候才需要新建分类？** 仅当主题明显不属于任何现有分类时。能归入现有分类就优先复用，避免 tab 过多。
 
 ---
 
