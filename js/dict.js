@@ -29,29 +29,61 @@
     return null;
   }
 
-  /** 本地查询：场景词汇 → glossary.js → common-words.js。返回统一结构或 null */
+  // 从下载生成的大词典（ECDICT 子集）里查一个变体，含词形还原
+  function matchDict(v) {
+    var dict = window.RTE_DICT;
+    if (!dict) return null;
+    var hit = dict[v];
+    if (!hit && window.RTE_DICT_FORMS && window.RTE_DICT_FORMS[v]) hit = dict[window.RTE_DICT_FORMS[v]];
+    if (!hit) return null;
+    // 生成格式为数组 [phonetic, translation]
+    return { phonetic: hit[0] || '', meaning: { zh: hit[1] || '' } };
+  }
+
+  /** 本地查询：场景词汇 → glossary.js → common-words.js → 大词典(dict-core.js)。返回统一结构或 null */
   function lookupLocal(raw, sceneVocab) {
     var vs = variants(raw);
     var glossary = window.RTE_GLOSSARY || {};
     var common = window.RTE_COMMON || {};
-    var vocabHit = null, glossHit = null, commonHit = null;
+    var vocabHit = null, glossHit = null, commonHit = null, dictHit = null;
     for (var i = 0; i < vs.length; i++) {
       if (!vocabHit) vocabHit = matchVocab(sceneVocab, vs[i]);
       if (!glossHit) glossHit = glossary[vs[i]] || null;
       if (!commonHit && typeof common[vs[i]] === 'string') commonHit = { meaning: { zh: common[vs[i]] } };
+      if (!dictHit) dictHit = matchDict(vs[i]);
     }
-    if (!vocabHit && !glossHit && !commonHit) return null;
+    if (!vocabHit && !glossHit && !commonHit && !dictHit) return null;
     var rich = vocabHit || glossHit;
     return {
       word: (rich && rich.word) || String(raw).replace(/[^A-Za-z'-]/g, ''),
-      phonetic: (rich && rich.phonetic) || '',
+      phonetic: (rich && rich.phonetic) || (dictHit && dictHit.phonetic) || '',
       pos: (rich && rich.pos) || '',
-      meaning: (rich && rich.meaning) || (commonHit && commonHit.meaning) || null,
+      meaning: (rich && rich.meaning) || (commonHit && commonHit.meaning) || (dictHit && dictHit.meaning) || null,
       example: (rich && rich.example) || '',
       collocations: (glossHit && glossHit.collocations) || (vocabHit && vocabHit.collocations) || [],
-      source: vocabHit ? 'vocab' : (glossHit ? 'glossary' : 'common')
+      source: vocabHit ? 'vocab' : (glossHit ? 'glossary' : (commonHit ? 'common' : 'dict'))
     };
   }
+
+  // ---- 大词典懒加载：首次点词时才加载 data/dict-core.js（若不存在则安静跳过） ----
+  var dictState = 'idle'; // idle | loading | done
+  var dictPromise = null;
+  function ensureDict() {
+    if (dictState === 'done') return Promise.resolve();
+    if (dictPromise) return dictPromise;
+    if (window.RTE_DICT) { dictState = 'done'; return Promise.resolve(); }
+    dictState = 'loading';
+    dictPromise = new Promise(function (resolve) {
+      var s = document.createElement('script');
+      s.src = 'data/dict-core.js';
+      s.async = true;
+      s.onload = function () { dictState = 'done'; resolve(); };
+      s.onerror = function () { dictState = 'done'; resolve(); }; // 没生成词典文件也不报错
+      document.head.appendChild(s);
+    });
+    return dictPromise;
+  }
+  function dictReady() { return dictState === 'done' || !!window.RTE_DICT; }
 
   // 源 1：MyMemory 翻译（免费无 key，给中文释义），支持 CORS
   function fetchChinese(w) {
@@ -105,5 +137,10 @@
     }).catch(function () { return null; });
   }
 
-  window.Dict = { lookupLocal: lookupLocal, fetchOnline: fetchOnline };
+  window.Dict = {
+    lookupLocal: lookupLocal,
+    fetchOnline: fetchOnline,
+    ensureDict: ensureDict,
+    dictReady: dictReady
+  };
 })();

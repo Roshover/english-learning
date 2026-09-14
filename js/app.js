@@ -121,19 +121,13 @@
   function showWordCard(anchorEl, rawWord) {
     closeWordCard();
     var vocab = currentScene ? currentScene.vocabulary : null;
-    var local = window.Dict.lookupLocal(rawWord, vocab);
-    var displayWord = local ? local.word : rawWord.replace(/[^A-Za-z'-]+$/,'').replace(/^[^A-Za-z'-]+/,'');
+    var displayWord = rawWord.replace(/^[^A-Za-z'-]+/, '').replace(/[^A-Za-z'-]+$/, '');
 
     var card = el('div', { class: 'word-card' });
-    var phonSpan = el('span', { class: 'wc-phon' }, [local && local.phonetic ? local.phonetic : '']);
+    var phonSpan = el('span', { class: 'wc-phon' }, ['']);
 
-    // 收藏用的条目（在线补充数据后会更新 meaning/phonetic）
-    var entry = {
-      word: displayWord,
-      phonetic: (local && local.phonetic) || '',
-      meaning: local && local.meaning ? pick(local.meaning) : '',
-      scene: currentScene ? pick(currentScene.title) : ''
-    };
+    // 收藏用的条目（查到释义后会更新 meaning/phonetic）
+    var entry = { word: displayWord, phonetic: '', meaning: '', scene: currentScene ? pick(currentScene.title) : '' };
     var starBtn = el('button', { class: 'wc-star', title: t('addFav') }, ['☆']);
     function updateStar() {
       var on = window.WordBook.has(entry.word);
@@ -141,11 +135,7 @@
       starBtn.classList.toggle('on', on);
       starBtn.title = on ? t('remFav') : t('addFav');
     }
-    starBtn.addEventListener('click', function (e) {
-      e.stopPropagation();
-      window.WordBook.toggle(entry);
-      updateStar();
-    });
+    starBtn.addEventListener('click', function (e) { e.stopPropagation(); window.WordBook.toggle(entry); updateStar(); });
     updateStar();
 
     card.appendChild(el('div', { class: 'wc-head' }, [
@@ -158,7 +148,23 @@
     var body = el('div', { class: 'wc-body' });
     card.appendChild(body);
 
-    if (local) {
+    var loading = el('div', { class: 'wc-meaning wc-loading' }, [pick({ zh: '查询中…', en: 'Looking up…' })]);
+    body.appendChild(loading);
+
+    document.body.appendChild(card);
+    wordCardEl = card; wordCardAnchor = anchorEl;
+    positionCard();
+    setTimeout(function () {
+      document.addEventListener('click', onDocClickForCard, true);
+      window.addEventListener('scroll', repositionCard, true);
+      window.addEventListener('resize', repositionCard);
+    }, 0);
+
+    function clearBody() { clear(body); }
+
+    function renderLocal(local) {
+      clearBody();
+      if (local.phonetic) phonSpan.textContent = local.phonetic;
       if (local.pos) body.appendChild(el('span', { class: 'wc-pos' }, [local.pos]));
       if (local.meaning) body.appendChild(el('div', { class: 'wc-meaning' }, [pick(local.meaning)]));
       if (local.collocations && local.collocations.length) {
@@ -171,18 +177,21 @@
           el('span', { class: 'ex-en' }, [local.example])
         ]));
       }
-    } else {
-      var loading = el('div', { class: 'wc-meaning wc-loading' }, [pick({ zh: '查询中…', en: 'Looking up…' })]);
-      body.appendChild(loading);
+      entry.phonetic = local.phonetic || entry.phonetic;
+      entry.meaning = local.meaning ? pick(local.meaning) : entry.meaning;
+      positionCard();
+    }
+
+    function renderOnline() {
       window.Dict.fetchOnline(rawWord).then(function (res) {
-        if (!wordCardEl || wordCardEl !== card) return; // 卡片已关闭或被替换
-        if (loading.parentNode) loading.parentNode.removeChild(loading);
+        if (wordCardEl !== card) return; // 卡片已关闭或被替换
+        clearBody();
         if (!res || (!res.zh && (!res.defs || !res.defs.length))) {
-          body.appendChild(el('div', { class: 'wc-meaning' }, [pick({ zh: '在线也没查到，点 🔊 可听发音。（file:// 打开无法联网，请用本地服务器或线上访问）', en: 'Not found online. Tap 🔊 to hear it. (Opening via file:// blocks network — use a local server or the hosted site.)' })]));
+          body.appendChild(el('div', { class: 'wc-meaning' }, [pick({ zh: '没查到该词，点 🔊 可听发音。（若是双击 file:// 打开则无法联网，请用本地服务器或线上访问）', en: 'Not found. Tap 🔊 to hear it. (Opening via file:// blocks network — use a local server or the hosted site.)' })]));
           positionCard();
           return;
         }
-        if (res.phonetic && !phonSpan.textContent) phonSpan.textContent = res.phonetic;
+        if (res.phonetic) phonSpan.textContent = res.phonetic;
         if (res.zh) body.appendChild(el('div', { class: 'wc-meaning' }, [res.zh]));
         (res.defs || []).forEach(function (d) {
           body.appendChild(el('div', { class: 'wc-onlinedef' }, [
@@ -192,21 +201,23 @@
           ]));
         });
         body.appendChild(el('div', { class: 'wc-tip' }, [t('onlineHint')]));
-        // 更新收藏条目
         entry.phonetic = entry.phonetic || res.phonetic || '';
         entry.meaning = res.zh || (res.defs[0] && res.defs[0].def) || entry.meaning;
         positionCard();
       });
     }
 
-    document.body.appendChild(card);
-    wordCardEl = card; wordCardAnchor = anchorEl;
-    positionCard();
-    setTimeout(function () {
-      document.addEventListener('click', onDocClickForCard, true);
-      window.addEventListener('scroll', repositionCard, true);
-      window.addEventListener('resize', repositionCard);
-    }, 0);
+    // 1) 先用已加载的词库（场景/glossary/common/已缓存的大词典）即时查
+    var eager = window.Dict.lookupLocal(rawWord, vocab);
+    if (eager) { renderLocal(eager); return; }
+
+    // 2) 没命中 → 懒加载大词典再查 → 仍没有则联网兜底
+    window.Dict.ensureDict().then(function () {
+      if (wordCardEl !== card) return;
+      var local = window.Dict.lookupLocal(rawWord, vocab);
+      if (local) renderLocal(local);
+      else renderOnline();
+    });
   }
 
   // ---------- 首页 ----------
