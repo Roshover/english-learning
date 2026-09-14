@@ -165,8 +165,17 @@
     function renderLocal(local) {
       clearBody();
       if (local.phonetic) phonSpan.textContent = local.phonetic;
-      if (local.pos) body.appendChild(el('span', { class: 'wc-pos' }, [local.pos]));
-      if (local.meaning) body.appendChild(el('div', { class: 'wc-meaning' }, [pick(local.meaning)]));
+
+      // 词性标签：glossary/词汇自带 pos；ECDICT/common 则从中文释义开头解析（如 "n. 有效性…"）
+      var meaningText = local.meaning ? pick(local.meaning) : '';
+      var posText = local.pos || '';
+      if (!posText && meaningText) {
+        var m = /^([a-zA-Z]{1,5}\.)\s*/.exec(meaningText);
+        if (m) { posText = m[1]; meaningText = meaningText.slice(m[0].length); }
+      }
+      if (posText) body.appendChild(el('span', { class: 'wc-pos' }, [posText]));
+      if (meaningText) body.appendChild(el('div', { class: 'wc-meaning' }, [meaningText]));
+
       if (local.collocations && local.collocations.length) {
         body.appendChild(el('div', { class: 'wc-sub' }, [pick({ zh: '常用搭配', en: 'Common collocations' })]));
         body.appendChild(el('div', { class: 'wc-collos' }, local.collocations.map(collocationRow)));
@@ -176,9 +185,19 @@
           el('span', { class: 'ex-label' }, [t('example') + '：']),
           el('span', { class: 'ex-en' }, [local.example])
         ]));
+      } else {
+        // ECDICT 无例句：有网时自动补一个例句（无网静默跳过）
+        window.Dict.fetchExample(rawWord).then(function (ex) {
+          if (wordCardEl !== card || !ex) return;
+          body.appendChild(el('div', { class: 'wc-example' }, [
+            el('span', { class: 'ex-label' }, [t('example') + '：']),
+            el('span', { class: 'ex-en' }, [ex])
+          ]));
+          positionCard();
+        });
       }
       entry.phonetic = local.phonetic || entry.phonetic;
-      entry.meaning = local.meaning ? pick(local.meaning) : entry.meaning;
+      entry.meaning = meaningText || (local.meaning ? pick(local.meaning) : entry.meaning);
       positionCard();
     }
 

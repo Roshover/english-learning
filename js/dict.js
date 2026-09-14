@@ -121,6 +121,17 @@
     }).catch(function () { return null; });
   }
 
+  /** 只取一个英文例句（给本地词典命中的词补例句用）。无网/无例句返回 null */
+  function fetchExample(raw) {
+    var w = String(raw || '').toLowerCase().replace(/[^a-z']/g, '');
+    if (!w) return Promise.resolve(null);
+    return fetchEnglish(w).then(function (en) {
+      if (!en || !en.defs) return null;
+      var d = en.defs.filter(function (x) { return x.example; })[0];
+      return d ? d.example : null;
+    }).catch(function () { return null; });
+  }
+
   /** 在线查询：并行取中文翻译 + 英文释义，合并。返回 {word,phonetic,zh,defs[]} 或 null */
   function fetchOnline(raw) {
     var w = String(raw || '').toLowerCase().replace(/[^a-z']/g, '');
@@ -140,6 +151,7 @@
   window.Dict = {
     lookupLocal: lookupLocal,
     fetchOnline: fetchOnline,
+    fetchExample: fetchExample,
     ensureDict: ensureDict,
     dictReady: dictReady
   };
