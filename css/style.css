@@ -239,6 +239,38 @@ body {
 .btn-speak.inline { margin-left: 6px; font-size: 14px; opacity: .6; }
 .btn-speak.inline:hover { opacity: 1; }
 
+/* ---------- Word card (popover) ---------- */
+.word-card {
+  position: fixed; z-index: 100; width: 300px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 14px; box-shadow: 0 12px 40px rgba(24, 39, 75, 0.22);
+  padding: 14px 16px; animation: wc-in .12s ease-out;
+}
+@keyframes wc-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+.wc-head { display: flex; align-items: center; gap: 8px; }
+.wc-word { font-size: 18px; font-weight: 700; }
+.wc-phon { font-size: 13px; color: var(--text-faint); flex: 1; }
+.wc-close { border: none; background: transparent; color: var(--text-faint); cursor: pointer;
+  font-size: 20px; line-height: 1; padding: 0 4px; border-radius: 6px; }
+.wc-close:hover { background: var(--surface-2); color: var(--text); }
+.wc-body { margin-top: 8px; }
+.wc-pos { display: inline-block; font-size: 12px; color: var(--accent); font-style: italic; margin-bottom: 4px; }
+.wc-meaning { font-size: 15px; margin-bottom: 6px; }
+.wc-loading { color: var(--text-faint); }
+.wc-sub { font-size: 12px; color: var(--text-faint); margin: 10px 0 6px; text-transform: uppercase; letter-spacing: .5px; }
+.wc-collos { display: flex; flex-direction: column; gap: 6px; }
+.wc-collo { display: flex; align-items: baseline; gap: 8px; padding: 7px 10px;
+  background: var(--surface-2); border-radius: 9px; cursor: pointer; transition: background .12s; }
+.wc-collo:hover { background: var(--primary-soft); }
+.wc-collo-en { font-size: 14px; font-weight: 600; color: var(--primary); }
+.wc-collo-zh { font-size: 13px; color: var(--text-soft); flex: 1; }
+.wc-collo-spk { font-size: 12px; opacity: .5; }
+.wc-collo:hover .wc-collo-spk { opacity: 1; }
+.wc-onlinedef { padding: 6px 0; border-top: 1px solid var(--border); margin-top: 6px; }
+.wc-onlinedef:first-of-type { border-top: none; margin-top: 0; }
+.wc-example { font-size: 13px; color: var(--text-soft); margin-top: 6px; }
+.wc-tip { font-size: 11px; color: var(--text-faint); margin-top: 10px; text-align: right; }
+
 /* ---------- Footer ---------- */
 .site-footer { border-top: 1px solid var(--border); margin-top: 40px; padding: 24px 0; }
 .site-footer .wrap { color: var(--text-faint); font-size: 13px; text-align: center; }

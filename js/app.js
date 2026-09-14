@@ -18,6 +18,8 @@
 
   // 当前场景页的逐句播放器（由 buildControls 创建）
   var player = null;
+  // 当前场景（供单词卡片查词汇用）
+  var currentScene = null;
 
   // ---------- 工具 ----------
   function el(tag, attrs, children) {
@@ -62,13 +64,122 @@
       if (/[A-Za-z']/.test(p)) {
         frag.appendChild(el('span', {
           class: 'word',
-          onclick: function (e) { e.stopPropagation(); window.Speech.speak(p); }
+          onclick: function (e) { e.stopPropagation(); showWordCard(this, p); }
         }, [p]));
       } else {
         frag.appendChild(document.createTextNode(p));
       }
     });
     return frag;
+  }
+
+  // ---------- 单词释义卡片 ----------
+  var wordCardEl = null;
+  var wordCardAnchor = null;
+
+  function closeWordCard() {
+    if (!wordCardEl) return;
+    if (wordCardEl.parentNode) wordCardEl.parentNode.removeChild(wordCardEl);
+    wordCardEl = null; wordCardAnchor = null;
+    document.removeEventListener('click', onDocClickForCard, true);
+    window.removeEventListener('scroll', repositionCard, true);
+    window.removeEventListener('resize', repositionCard);
+  }
+  function onDocClickForCard(e) {
+    if (wordCardEl && !wordCardEl.contains(e.target) && !(e.target.classList && e.target.classList.contains('word'))) {
+      closeWordCard();
+    }
+  }
+  function positionCard() {
+    if (!wordCardEl || !wordCardAnchor) return;
+    var r = wordCardAnchor.getBoundingClientRect();
+    var cw = Math.min(320, window.innerWidth - 24);
+    wordCardEl.style.width = cw + 'px';
+    var ch = wordCardEl.offsetHeight;
+    var top = r.bottom + 8;
+    if (top + ch > window.innerHeight - 10) {
+      var above = r.top - 8 - ch;
+      top = above > 10 ? above : Math.max(10, window.innerHeight - 10 - ch);
+    }
+    var left = r.left;
+    if (left + cw > window.innerWidth - 12) left = window.innerWidth - 12 - cw;
+    if (left < 12) left = 12;
+    wordCardEl.style.top = top + 'px';
+    wordCardEl.style.left = left + 'px';
+  }
+  function repositionCard() { positionCard(); }
+
+  function collocationRow(c) {
+    var en = c.en || c;
+    return el('div', { class: 'wc-collo', onclick: function () { window.Speech.speak(en); } }, [
+      el('span', { class: 'wc-collo-en' }, [en]),
+      c.zh ? el('span', { class: 'wc-collo-zh' }, [c.zh]) : null,
+      el('span', { class: 'wc-collo-spk' }, ['🔊'])
+    ]);
+  }
+
+  function showWordCard(anchorEl, rawWord) {
+    closeWordCard();
+    var vocab = currentScene ? currentScene.vocabulary : null;
+    var local = window.Dict.lookupLocal(rawWord, vocab);
+    var displayWord = local ? local.word : rawWord.replace(/[^A-Za-z'-]+$/,'').replace(/^[^A-Za-z'-]+/,'');
+
+    var card = el('div', { class: 'word-card' });
+    var phonSpan = el('span', { class: 'wc-phon' }, [local && local.phonetic ? local.phonetic : '']);
+    card.appendChild(el('div', { class: 'wc-head' }, [
+      el('span', { class: 'wc-word' }, [displayWord]),
+      phonSpan,
+      el('button', { class: 'btn-speak', title: '朗读', onclick: function (e) { e.stopPropagation(); window.Speech.speak(displayWord); } }, ['🔊']),
+      el('button', { class: 'wc-close', title: '关闭', onclick: function (e) { e.stopPropagation(); closeWordCard(); } }, ['×'])
+    ]));
+    var body = el('div', { class: 'wc-body' });
+    card.appendChild(body);
+
+    if (local) {
+      if (local.pos) body.appendChild(el('span', { class: 'wc-pos' }, [local.pos]));
+      if (local.meaning) body.appendChild(el('div', { class: 'wc-meaning' }, [pick(local.meaning)]));
+      if (local.collocations && local.collocations.length) {
+        body.appendChild(el('div', { class: 'wc-sub' }, [pick({ zh: '常用搭配', en: 'Common collocations' })]));
+        body.appendChild(el('div', { class: 'wc-collos' }, local.collocations.map(collocationRow)));
+      }
+      if (local.example) {
+        body.appendChild(el('div', { class: 'wc-example' }, [
+          el('span', { class: 'ex-label' }, [t('example') + '：']),
+          el('span', { class: 'ex-en' }, [local.example])
+        ]));
+      }
+    } else {
+      var loading = el('div', { class: 'wc-meaning wc-loading' }, [pick({ zh: '查询中…', en: 'Looking up…' })]);
+      body.appendChild(loading);
+      window.Dict.fetchOnline(rawWord).then(function (res) {
+        if (!wordCardEl || wordCardEl !== card) return; // 卡片已关闭或被替换
+        if (loading.parentNode) loading.parentNode.removeChild(loading);
+        if (!res || !res.defs.length) {
+          body.appendChild(el('div', { class: 'wc-meaning' }, [pick({ zh: '词库未收录，点 🔊 可听发音。', en: 'Not in the glossary. Tap 🔊 to hear it.' })]));
+          positionCard();
+          return;
+        }
+        if (res.phonetic && !phonSpan.textContent) phonSpan.textContent = res.phonetic;
+        res.defs.forEach(function (d) {
+          body.appendChild(el('div', { class: 'wc-onlinedef' }, [
+            d.pos ? el('span', { class: 'wc-pos' }, [d.pos]) : null,
+            el('div', { class: 'wc-meaning' }, [d.def]),
+            d.example ? el('div', { class: 'wc-example' }, [el('span', { class: 'ex-en' }, ['“' + d.example + '”'])]) : null
+          ]));
+        });
+        body.appendChild(el('div', { class: 'wc-tip' }, [pick({ zh: '来自在线词典（英文释义）', en: 'From an online dictionary' })]));
+        positionCard();
+      });
+    }
+
+    document.body.appendChild(card);
+    wordCardEl = card; wordCardAnchor = anchorEl;
+    positionCard();
+    setTimeout(function () {
+      document.addEventListener('click', onDocClickForCard, true);
+      window.addEventListener('scroll', repositionCard, true);
+      window.addEventListener('resize', repositionCard);
+    }, 0);
   }
 
   // ---------- 首页 ----------
@@ -171,6 +282,8 @@
     var s = getScene(id);
     if (!s) { location.hash = '#/'; return; }
     window.Speech.stop();
+    closeWordCard();
+    currentScene = s;
     clear(app);
 
     app.appendChild(el('div', { class: 'scene-top' }, [
@@ -422,6 +535,7 @@
   function router() {
     var hash = location.hash || '#/';
     window.Speech.stop();
+    closeWordCard();
     if (hash.indexOf('#/scene/') === 0) renderScene(hash.slice('#/scene/'.length));
     else renderHome();
     window.scrollTo(0, 0);
