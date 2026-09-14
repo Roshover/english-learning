@@ -1,125 +1,160 @@
 /**
  * 场景数据：酒店入住 & 前台沟通
  * 复制这个文件改内容，就能新增一个场景。
- * 记得在 index.html 里加一行 <script>，并在 data/scenes-index.js 里注册。
+ * dialogue 里可以放两种元素：
+ *   1) 对话行： { roleKey, role:{zh,en}, en, zh, note?:{zh,en} }
+ *   2) 分节标题：{ divider: { zh, en } }   —— 用来把长对话分段，更好读
  */
 window.RTE_SCENES = window.RTE_SCENES || {};
 window.RTE_SCENES['hotel-check-in'] = {
   id: 'hotel-check-in',
   category: { zh: '出国旅游', en: 'Travel' },
   icon: '🏨',
-  minutes: 6,
+  minutes: 12,
+  level: { zh: '初中级', en: 'Beginner–Intermediate' },
   title: { zh: '酒店入住 & 前台沟通', en: 'Hotel Check-in & Front Desk' },
   scene: {
-    zh: '你刚下飞机，拖着行李来到酒店前台办理入住。过程中房卡出了点问题，你需要和前台沟通解决。',
-    en: 'You just landed and arrive at the hotel front desk to check in. Something goes wrong with the key card, and you work it out with the receptionist.'
+    zh: '你刚下飞机，拖着行李来到酒店前台办理入住。从登记、付押金、问设施，到房卡失效回来沟通、申请延迟退房，一整套真实流程。',
+    en: 'You just landed and arrive at the hotel front desk. From registration, deposit and amenities, to a broken key card and a late check-out request — a full, realistic flow.'
   },
 
-  // 生僻词 / 专业名词：先看懂再进对话
   vocabulary: [
-    {
-      word: 'reservation',
-      phonetic: '/ˌrezərˈveɪʃn/',
-      pos: 'n.',
+    { word: 'reservation', phonetic: '/ˌrezərˈveɪʃn/', pos: 'n.',
       meaning: { zh: '预订（房间、座位等）', en: 'a booking made in advance' },
-      example: 'I have a reservation under the name Zhang.'
-    },
-    {
-      word: 'check in',
-      phonetic: '/tʃek ɪn/',
-      pos: 'phr. v.',
+      example: 'I have a reservation under the name Zhang.' },
+    { word: 'check in', phonetic: '/tʃek ɪn/', pos: 'phr. v.',
       meaning: { zh: '办理入住登记', en: 'to register on arrival at a hotel' },
-      example: "I'd like to check in, please."
-    },
-    {
-      word: 'confirmation number',
-      phonetic: '/ˌkɑːnfərˈmeɪʃn ˈnʌmbər/',
-      pos: 'n.',
+      example: "I'd like to check in, please." },
+    { word: 'confirmation number', phonetic: '/ˌkɑːnfərˈmeɪʃn ˈnʌmbər/', pos: 'n.',
       meaning: { zh: '预订确认号', en: 'the code that confirms your booking' },
-      example: 'Here is my confirmation number.'
-    },
-    {
-      word: 'deposit',
-      phonetic: '/dɪˈpɑːzɪt/',
-      pos: 'n.',
-      meaning: { zh: '押金', en: 'money paid in advance, refundable' },
-      example: 'We require a $50 deposit for incidentals.'
-    },
-    {
-      word: 'key card',
-      phonetic: '/kiː kɑːrd/',
-      pos: 'n.',
-      meaning: { zh: '房卡', en: 'the card used to open your room' },
-      example: 'Your key card is not working.'
-    },
-    {
-      word: 'deactivate',
-      phonetic: '/diˈæktɪveɪt/',
-      pos: 'v.',
-      meaning: { zh: '（使）失效、停用', en: 'to make something stop working' },
-      example: 'Your phone may have deactivated the key card.'
-    },
-    {
-      word: 'complimentary',
-      phonetic: '/ˌkɑːmplɪˈmentri/',
-      pos: 'adj.',
+      example: 'Here is my confirmation number.' },
+    { word: 'photo ID', phonetic: '/ˈfoʊtoʊ ˌaɪ ˈdiː/', pos: 'n.',
+      meaning: { zh: '带照片的证件（护照、驾照等）', en: 'identification with your picture' },
+      example: 'May I see a photo ID, please?' },
+    { word: 'deposit', phonetic: '/dɪˈpɑːzɪt/', pos: 'n.',
+      meaning: { zh: '押金', en: 'money paid in advance, usually refundable' },
+      example: 'We require a $50 deposit for incidentals.' },
+    { word: 'incidentals', phonetic: '/ˌɪnsɪˈdentlz/', pos: 'n.',
+      meaning: { zh: '杂费（迷你吧、洗衣等额外消费）', en: 'small extra charges like minibar or laundry' },
+      example: 'The deposit covers any incidentals.' },
+    { word: 'king room', phonetic: '/kɪŋ ruːm/', pos: 'n.',
+      meaning: { zh: '大床房（一张特大床）', en: 'a room with one large king-size bed' },
+      example: 'I booked a king room for three nights.' },
+    { word: 'amenities', phonetic: '/əˈmenətiz/', pos: 'n.',
+      meaning: { zh: '（酒店的）设施、便利用品', en: 'facilities and comforts provided by a hotel' },
+      example: 'The gym and pool are on the amenities list.' },
+    { word: 'complimentary', phonetic: '/ˌkɑːmplɪˈmentri/', pos: 'adj.',
       meaning: { zh: '免费赠送的', en: 'given free of charge' },
-      example: 'Breakfast is complimentary from 7 to 10 a.m.'
-    },
-    {
-      word: 'late check-out',
-      phonetic: '/leɪt ˈtʃek aʊt/',
-      pos: 'n.',
+      example: 'Breakfast is complimentary from 7 to 10 a.m.' },
+    { word: 'key card', phonetic: '/kiː kɑːrd/', pos: 'n.',
+      meaning: { zh: '房卡', en: 'the card used to open your room' },
+      example: 'Your key card is not working.' },
+    { word: 'deactivate', phonetic: '/diˈæktɪveɪt/', pos: 'v.',
+      meaning: { zh: '（使）失效、消磁', en: 'to make something stop working' },
+      example: 'A phone can deactivate the key card.' },
+    { word: 'reactivate', phonetic: '/riˈæktɪveɪt/', pos: 'v.',
+      meaning: { zh: '重新激活、恢复使用', en: 'to make something work again' },
+      example: 'Let me reactivate your card.' },
+    { word: 'housekeeping', phonetic: '/ˈhaʊskiːpɪŋ/', pos: 'n.',
+      meaning: { zh: '客房清洁服务', en: 'the hotel department that cleans rooms' },
+      example: "I'll let housekeeping know." },
+    { word: 'late check-out', phonetic: '/leɪt ˈtʃek aʊt/', pos: 'n.',
       meaning: { zh: '延迟退房', en: 'leaving the room later than the standard time' },
-      example: 'Could I request a late check-out?'
-    }
+      example: 'Could I request a late check-out?' },
+    { word: 'at no extra charge', phonetic: '/æt noʊ ˈekstrə tʃɑːrdʒ/', pos: 'phrase',
+      meaning: { zh: '不额外收费', en: 'without any additional cost' },
+      example: 'We can do that at no extra charge.' }
   ],
 
-  // 对话：role 是双语，en / zh 分别是英文台词与中文翻译
   dialogue: [
+    { divider: { zh: '① 到达 & 报预订', en: '① Arrival & Reservation' } },
+
     { roleKey: 'guest', role: { zh: '你', en: 'You' },
-      en: "Hi, I'd like to check in, please. I have a reservation under Zhang.",
-      zh: '你好，我想办理入住。我用张先生的名字预订了房间。' },
+      en: "Hi, good evening. I'd like to check in, please. I have a reservation under Zhang.",
+      zh: '你好，晚上好。我想办理入住。我用张先生的名字预订了房间。' },
+    { roleKey: 'staff', role: { zh: '前台', en: 'Front Desk' },
+      en: "Good evening, and welcome! I'd be happy to help. May I have your confirmation number and a photo ID?",
+      zh: '晚上好，欢迎光临！我很乐意帮您办理。可以给我预订确认号和一张带照片的证件吗？' },
+    { roleKey: 'guest', role: { zh: '你', en: 'You' },
+      en: "Of course. The confirmation number is 8842-K, and here's my passport.",
+      zh: '当然。确认号是 8842-K，这是我的护照。' },
+    { roleKey: 'staff', role: { zh: '前台', en: 'Front Desk' },
+      en: "Thank you, Mr. Zhang. Let me pull that up… I have you down for a king room for three nights, checking out on the 17th. Is that correct?",
+      zh: '谢谢您，张先生。我查一下……我这边显示您预订了一间大床房，住三晚，17 号退房。对吗？' },
+    { roleKey: 'guest', role: { zh: '你', en: 'You' },
+      en: "Yes, that's right.",
+      zh: '对，没错。' },
+
+    { divider: { zh: '② 押金 & 付款', en: '② Deposit & Payment' } },
 
     { roleKey: 'staff', role: { zh: '前台', en: 'Front Desk' },
-      en: "Welcome! May I have your confirmation number and a photo ID?",
-      zh: '欢迎光临！可以给我您的预订确认号和一张证件吗？' },
-
+      en: "Great. Your room is already paid for online. We'll just place a $50 hold on your card for incidentals — it's refunded at check-out if nothing is used.",
+      zh: '好的。您的房费已经在线支付了。我们只会在您卡上预授权 50 美元作为杂费押金——如果没有消费，退房时会退还。' },
     { roleKey: 'guest', role: { zh: '你', en: 'You' },
-      en: "Sure. The confirmation number is 8842-K, and here's my passport.",
-      zh: '好的。确认号是 8842-K，这是我的护照。' },
-
+      en: "Sounds good. Here's my credit card.",
+      zh: '没问题。这是我的信用卡。' },
     { roleKey: 'staff', role: { zh: '前台', en: 'Front Desk' },
-      en: "Thank you. I have you down for a king room for three nights. We'll place a $50 deposit for incidentals, refunded at check-out.",
-      zh: '谢谢。我这边显示您预订了一间大床房，住三晚。我们会预授权 50 美元押金用于杂费，退房时退还。' },
+      en: "Perfect, the hold is authorized. You'll see it drop off in a few business days after you leave.",
+      zh: '好了，押金已预授权。您退房后几个工作日内就会看到这笔预授权自动取消。' },
+
+    { divider: { zh: '③ 设施 & 早餐', en: '③ Amenities & Breakfast' } },
 
     { roleKey: 'guest', role: { zh: '你', en: 'You' },
-      en: "That works. Is breakfast included?",
-      zh: '可以。请问含早餐吗？' },
-
+      en: "Thanks. Could you tell me about the amenities? Is breakfast included?",
+      zh: '谢谢。能介绍一下酒店设施吗？含早餐吗？' },
     { roleKey: 'staff', role: { zh: '前台', en: 'Front Desk' },
-      en: "Yes, breakfast is complimentary from 7 to 10 a.m. on the second floor. Here are your two key cards for room 1208.",
-      zh: '含的，早餐免费，早上 7 点到 10 点在二楼。这是您 1208 房间的两张房卡。' },
-
+      en: "Absolutely. Breakfast is complimentary and served on the second floor from 7 to 10 a.m. The gym and pool are on the fourth floor, open 6 a.m. to 10 p.m.",
+      zh: '当然。早餐免费，在二楼供应，早上 7 点到 10 点。健身房和泳池在四楼，早 6 点到晚 10 点开放。' },
     { roleKey: 'guest', role: { zh: '你', en: 'You' },
-      en: "Great, thank you!",
-      zh: '太好了，谢谢！' },
-
-    // —— 房卡出问题，回来沟通 ——
-    { roleKey: 'guest', role: { zh: '你', en: 'You' },
-      en: "Sorry to bother you. My key card isn't working — the light turns red.",
-      zh: '不好意思打扰一下。我的房卡刷不开，指示灯是红的。' },
-
+      en: "Is there Wi-Fi in the rooms?",
+      zh: '房间里有 Wi-Fi 吗？' },
     { roleKey: 'staff', role: { zh: '前台', en: 'Front Desk' },
-      en: "I'm sorry about that. Sometimes a phone can deactivate the card if they're kept together. Let me re-activate it for you.",
-      zh: '非常抱歉。房卡和手机放一起有时会消磁失效。我帮您重新激活一下。' },
+      en: "Yes, it's free throughout the hotel. The network name and password are printed on your key card sleeve.",
+      zh: '有的，全酒店免费。网络名称和密码印在您的房卡卡套上。' },
+    { roleKey: 'staff', role: { zh: '前台', en: 'Front Desk' },
+      en: "Here are your two key cards for room 1208. The elevators are just around the corner to your left.",
+      zh: '这是您 1208 房间的两张房卡。电梯就在您左手边拐角处。' },
+    { roleKey: 'guest', role: { zh: '你', en: 'You' },
+      en: "Great, thank you so much!",
+      zh: '太好了，非常感谢！' },
+
+    { divider: { zh: '④ 房卡失效，回来沟通', en: '④ The Key Card Problem' } },
 
     { roleKey: 'guest', role: { zh: '你', en: 'You' },
-      en: "Ah, that makes sense. Also, could I request a late check-out on my last day?",
-      zh: '原来如此。另外，我最后一天可以申请延迟退房吗？' },
-
+      en: "Sorry to bother you again. My key card isn't working — the light just turns red when I tap it.",
+      zh: '不好意思又来打扰。我的房卡刷不开——一刷指示灯就变红。' },
     { roleKey: 'staff', role: { zh: '前台', en: 'Front Desk' },
-      en: "Of course. I can offer check-out until 2 p.m. at no extra charge. You're all set — enjoy your stay!",
-      zh: '当然可以。我可以给您延到下午 2 点退房，不额外收费。都办好了，祝您入住愉快！' }
+      en: "Oh, I'm sorry about that. Sometimes a phone can deactivate the card if they're kept together in a pocket. Let me reactivate both cards for you.",
+      zh: '哦，非常抱歉。房卡和手机放在同一个口袋里有时会消磁失效。我帮您把两张卡都重新激活一下。' },
+    { roleKey: 'guest', role: { zh: '你', en: 'You' },
+      en: "Ah, that makes sense — they were right next to my phone.",
+      zh: '原来如此——它们刚才就紧挨着我的手机。' },
+    { roleKey: 'staff', role: { zh: '前台', en: 'Front Desk' },
+      en: "That would do it. Okay, they're reactivated. Could you try tapping this one on the reader here to confirm?",
+      zh: '那就是原因了。好了，已经重新激活。您能在这边的读卡器上刷一下这张试试确认吗？' },
+    { roleKey: 'guest', role: { zh: '你', en: 'You' },
+      en: "Green light — perfect. Thanks for sorting that out.",
+      zh: '绿灯了——太好了。谢谢您帮忙解决。' },
+
+    { divider: { zh: '⑤ 顺便提两个需求', en: '⑤ A Couple More Requests' } },
+
+    { roleKey: 'guest', role: { zh: '你', en: 'You' },
+      en: "While I'm here — could I get a couple of extra towels sent up?",
+      zh: '既然我在这儿——能帮我往房间多送几条毛巾吗？' },
+    { roleKey: 'staff', role: { zh: '前台', en: 'Front Desk' },
+      en: "Of course. I'll let housekeeping know, and they'll bring them up within fifteen minutes.",
+      zh: '当然可以。我会通知客房部，他们会在十五分钟内送上去。' },
+    { roleKey: 'guest', role: { zh: '你', en: 'You' },
+      en: "Perfect. And on my last day, would a late check-out be possible? My flight isn't until the evening.",
+      zh: '太好了。还有我最后一天，可以延迟退房吗？我的航班要到晚上才走。' },
+    { roleKey: 'staff', role: { zh: '前台', en: 'Front Desk' },
+      en: "Let me check availability… Yes, I can offer check-out until 2 p.m. at no extra charge. I've added a note to your reservation.",
+      zh: '我查一下有没有空房……可以，我能给您延到下午 2 点退房，不额外收费。我已经在您的预订上加了备注。' },
+    { roleKey: 'guest', role: { zh: '你', en: 'You' },
+      en: "That's really helpful. Thank you!",
+      zh: '这真是帮大忙了。谢谢！' },
+    { roleKey: 'staff', role: { zh: '前台', en: 'Front Desk' },
+      en: "My pleasure. If you need anything at all, just dial zero from your room. Enjoy your stay, Mr. Zhang!",
+      zh: '不客气。您有任何需要，在房间里拨 0 就行。祝您入住愉快，张先生！' }
   ]
 };
