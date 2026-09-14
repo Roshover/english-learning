@@ -467,12 +467,18 @@
         toggleBtn.textContent = '📝 ' + t('addNote');
       }
     }
+    function updateEditorButtons() {
+      var hasText = ta.value.trim().length > 0;
+      saveBtn.classList.toggle('hidden', !hasText);              // 有输入才显示保存
+      delBtn.classList.toggle('hidden', !window.Notes.has(sceneId, index)); // 有已存笔记才显示删除
+    }
     function openEditor(e) {
       if (e) e.stopPropagation();
       ta.value = window.Notes.get(sceneId, index);
       editor.classList.remove('hidden');
       display.classList.add('hidden');
       toggleBtn.classList.add('hidden');
+      updateEditorButtons();
       ta.focus();
     }
     function closeEditor() {
@@ -490,6 +496,8 @@
     delBtn.addEventListener('click', function (e) { e.stopPropagation(); window.Notes.remove(sceneId, index); closeEditor(); });
     var cancelBtn = el('button', { class: 'note-cancel' }, [t('cancel')]);
     cancelBtn.addEventListener('click', function (e) { e.stopPropagation(); closeEditor(); });
+
+    ta.addEventListener('input', updateEditorButtons);
 
     editor.appendChild(ta);
     editor.appendChild(el('div', { class: 'note-actions' }, [saveBtn, delBtn, cancelBtn]));
