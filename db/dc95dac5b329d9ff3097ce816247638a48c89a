@@ -1,0 +1,41 @@
+data/common-words.js
+  s_1949834f377b4e::t_785e336bfa5bb0 1-90,92-95
+  s_1949834f377b4e::t_fbc11c7c79ac15 91
+README.md
+  s_1949834f377b4e::t_50d63a3f38f2ed 12-13
+  s_1949834f377b4e::t_b48f97159149ae 60,64-65
+js/wordbook.js
+  s_1949834f377b4e::t_947347c95430c8 1-54
+js/dict.js
+  s_1949834f377b4e::t_52503af63f4b32 56-72,74,89-105
+  s_1949834f377b4e::t_77fc1f722d8b0f 32,36-37,41,43-44,46-50,52
+js/app.js
+  s_1949834f377b4e::t_c63a9ce3a3259a 561-603,610
+  s_1949834f377b4e::t_a80a4bff46b251 129-150,155
+  s_1949834f377b4e::t_eb6b021823e226 180-181,186-187,194-197
+  s_1949834f377b4e::t_f3c498568d15ac 619-626
+css/style.css
+  s_1949834f377b4e::t_c994dd05586251 273-301
+js/i18n.js
+  s_1949834f377b4e::t_d3d0e4b96eae13 48-55
+  s_1949834f377b4e::t_8fe0f83a8817b3 95-102
+index.html
+  s_1949834f377b4e::t_fa4e05ef1e2c16 22-25
+  s_1949834f377b4e::t_5ef54a852e6fd2 47,49,51
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "dbdc95dac5b329d9ff3097ce816247638a48c89a",
+  "prompts": {},
+  "sessions": {
+    "s_1949834f377b4e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c26f9185-0f37-49c8-b39f-1b3f92c23093",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Zaza Zhang <zaza.zhang@zoom.us>"
+    }
+  }
+}
