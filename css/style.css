@@ -361,6 +361,39 @@ body {
   #reviewBtn span[data-i18n] { display: none; }  /* 手机上只留 📚 图标 */
 }
 
+/* ---------- Patterns (句型公式) ---------- */
+.patterns-nav-wrap { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }
+.patterns-nav { flex-wrap: wrap; overflow: visible; transition: max-height .25s ease; }
+.patterns-nav.collapsed { max-height: 46px; overflow: hidden; }
+.pat-nav-toggle { align-self: flex-start; font-size: 13px; padding: 5px 14px; }
+.pat-section { margin-top: 28px; scroll-margin-top: 80px; }
+.pat-cat-title {
+  font-size: 20px; margin: 0 0 14px; display: flex; align-items: center; gap: 10px;
+}
+.pat-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow-sm);
+  padding: 18px 20px; margin-bottom: 14px;
+}
+.pat-formula {
+  font-size: 17px; font-weight: 700; color: var(--primary);
+  padding: 10px 14px; background: var(--primary-soft); border-radius: var(--radius-sm);
+  margin-bottom: 12px; line-height: 1.5; font-family: 'Georgia', 'Times New Roman', serif;
+}
+.pat-meaning { font-size: 15px; margin-bottom: 8px; line-height: 1.6; }
+.pat-usage { font-size: 14px; color: var(--text-soft); margin-bottom: 12px; line-height: 1.5; }
+.pat-label { font-weight: 600; color: var(--text-faint); font-size: 12px; text-transform: uppercase; letter-spacing: .3px; }
+.pat-examples { display: flex; flex-direction: column; gap: 8px; }
+.pat-ex {
+  padding: 10px 14px; background: var(--surface-2); border-radius: var(--radius-sm);
+}
+.pat-ex-en { font-size: 15px; display: flex; align-items: center; flex-wrap: wrap; gap: 2px; }
+.pat-ex-zh { font-size: 13px; color: var(--text-soft); margin-top: 4px; }
+
+@media (max-width: 600px) {
+  #patternsBtn span[data-i18n] { display: none; }
+}
+
 /* ---------- Footer ---------- */
 .site-footer { border-top: 1px solid var(--border); margin-top: 40px; padding: 24px 0; }
 .site-footer .wrap { color: var(--text-faint); font-size: 13px; text-align: center; }

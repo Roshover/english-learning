@@ -65,7 +65,13 @@
       notePlaceholder: '记录你的学习心得，例如：这句的语气、易错点、想背的表达…',
       save: '保存',
       cancel: '取消',
-      del: '删除'
+      del: '删除',
+      patterns: '句型公式',
+      patternsTitle: '🧩 句型公式',
+      patternsSub: '背下模板，套用即说——非母语者最需要的"造句框架"。',
+      patternsUsage: '用法',
+      patternsExamples: '例句',
+      patternsCount: '个句型'
     },
     en: {
       brandTitle: 'Real-Talk',
@@ -125,7 +131,13 @@
       notePlaceholder: 'Write your own notes: tone, tricky points, phrases to memorize…',
       save: 'Save',
       cancel: 'Cancel',
-      del: 'Delete'
+      del: 'Delete',
+      patterns: 'Formulas',
+      patternsTitle: '🧩 Sentence Formulas',
+      patternsSub: 'Memorize the template, plug in your words — the sentence frameworks every learner needs.',
+      patternsUsage: 'Usage',
+      patternsExamples: 'Examples',
+      patternsCount: 'patterns'
     }
   };
 

@@ -204,6 +204,53 @@ window.RTE_SCENES['restaurant-order'] = {
 
 ---
 
+---
+
+## 🧩 新增句型公式（Sentence Formulas）
+
+句型公式是一个**全局独立栏目**（路由 `#/patterns`），数据集中在 `data/patterns.js` 一个文件里。
+新增句型 = **只编辑 `data/patterns.js`**，不需要改任何其他文件。
+
+### 数据结构
+
+`data/patterns.js` 的顶层是 `window.RTE_PATTERNS = { categories: [...] }`。
+
+**每个分类（category）：**
+```js
+{
+  key: 'requesting',                        // 唯一英文标识
+  name: { zh: '请求 & 许可', en: 'Requesting & Permission' },
+  icon: '🙋',                               // 一个 emoji
+  patterns: [ /* 见下 */ ]
+}
+```
+
+**每个句型（pattern）：**
+```js
+{
+  formula: 'Would you mind if I + past tense …?',   // 句型模板（英文）
+  meaning: { zh: '……', en: '…' },                    // 中英释义
+  usage:   { zh: '……', en: '…' },                    // 使用场景 / 注意事项
+  examples: [                                         // 2–3 个例句
+    { en: 'Would you mind if I opened the window?', zh: '你介意我开一下窗户吗？' }
+  ]
+}
+```
+
+### 操作方式
+
+- **给现有分类加句型**：找到对应 `key` 的分类，在其 `patterns` 数组末尾追加新对象。
+- **新建一个分类**：在 `categories` 数组末尾追加一个新分类对象（包含 `key`、`name`、`icon`、`patterns`），首页导航会自动出现新分类。
+- **不需要**改 `index.html`、`js/`、`css/`、`data/scenes-index.js` 或任何其他文件。
+
+### 质量要求
+- `formula` 用英文写，动词形式用语法术语标注（如 `+ verb-ing`、`+ past tense`）。
+- `meaning` 和 `usage` 中英都要填，`usage` 侧重"什么场景下用"和"容易出错的点"。
+- `examples` 至少 2 个，要口语化、贴近真实场景（职场/旅行/日常均可）。
+- 避免和已有句型重复——先通读现有内容再添加。
+
+---
+
 ## ✅ 提交前检查清单
 - [ ] 只改了 `data/` 下文件，没碰 `js/`、`css/`、`index.html`、`tools/`
 - [ ] 文件名 = 内部 `id` = 清单里登记的 id

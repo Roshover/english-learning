@@ -735,6 +735,106 @@
   // ---------- 复习中心（生词本 + 笔记） ----------
   var reviewTab = 'words'; // 'words' | 'notes'
 
+  // ---------- 句型公式页 ----------
+  function renderPatterns() {
+    closeWordCard();
+    currentScene = null;
+    clear(app);
+
+    var data = window.RTE_PATTERNS;
+    if (!data || !data.categories || !data.categories.length) {
+      app.appendChild(el('div', { class: 'empty-state' }, [
+        el('div', { class: 'empty-emoji' }, ['🧩']),
+        el('p', {}, [pick({ zh: '句型公式还在准备中…', en: 'Sentence formulas coming soon…' })])
+      ]));
+      return;
+    }
+
+    app.appendChild(el('div', { class: 'scene-top' }, [
+      el('a', { class: 'btn-ghost', href: '#/' }, ['← ' + t('backHome')]),
+      el('div', { class: 'scene-title-block' }, [
+        el('h1', {}, [t('patternsTitle')]),
+        el('p', { class: 'scene-desc' }, [t('patternsSub')])
+      ])
+    ]));
+
+    // 分类快速导航（默认折叠只显示一行）
+    var navWrap = el('div', { class: 'patterns-nav-wrap' });
+    var nav = el('div', { class: 'tabs patterns-nav collapsed' });
+    data.categories.forEach(function (cat) {
+      var tab = el('button', { class: 'tab' }, [
+        el('span', {}, [cat.icon + ' ' + pick(cat.name)]),
+        el('span', { class: 'tab-count' }, [String(cat.patterns.length)])
+      ]);
+      tab.addEventListener('click', function () {
+        var target = document.getElementById('pat-' + cat.key);
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+      nav.appendChild(tab);
+    });
+    navWrap.appendChild(nav);
+
+    var expandBtn = el('button', { class: 'pat-nav-toggle btn-ghost' }, [
+      pick({ zh: '展开全部 ▾', en: 'Show all ▾' })
+    ]);
+    expandBtn.addEventListener('click', function () {
+      var isCollapsed = nav.classList.toggle('collapsed');
+      expandBtn.textContent = isCollapsed
+        ? pick({ zh: '展开全部 ▾', en: 'Show all ▾' })
+        : pick({ zh: '收起 ▴', en: 'Collapse ▴' });
+    });
+    navWrap.appendChild(expandBtn);
+    app.appendChild(navWrap);
+
+    // 各分类
+    data.categories.forEach(function (cat) {
+      var section = el('section', { class: 'pat-section', id: 'pat-' + cat.key });
+      section.appendChild(el('h2', { class: 'pat-cat-title' }, [
+        cat.icon + ' ' + pick(cat.name),
+        el('span', { class: 'count-badge' }, [cat.patterns.length + ' ' + t('patternsCount')])
+      ]));
+
+      cat.patterns.forEach(function (p) {
+        var card = el('div', { class: 'pat-card' });
+
+        // 公式
+        card.appendChild(el('div', { class: 'pat-formula' }, [p.formula]));
+
+        // 释义
+        card.appendChild(el('div', { class: 'pat-meaning' }, [pick(p.meaning)]));
+
+        // 用法
+        card.appendChild(el('div', { class: 'pat-usage' }, [
+          el('span', { class: 'pat-label' }, [t('patternsUsage') + ': ']),
+          pick(p.usage)
+        ]));
+
+        // 例句
+        var exList = el('div', { class: 'pat-examples' });
+        (p.examples || []).forEach(function (ex) {
+          var exItem = el('div', { class: 'pat-ex' });
+          var enWrap = el('div', { class: 'pat-ex-en' });
+          enWrap.appendChild(renderClickableEnglish(ex.en));
+          var speakBtn = el('button', { class: 'btn-speak inline', onclick: function (e) {
+            e.stopPropagation();
+            window.Speech.speak(ex.en);
+          } }, ['🔊']);
+          enWrap.appendChild(speakBtn);
+          exItem.appendChild(enWrap);
+          if (showTranslation && ex.zh) {
+            exItem.appendChild(el('div', { class: 'pat-ex-zh' }, [ex.zh]));
+          }
+          exList.appendChild(exItem);
+        });
+        card.appendChild(exList);
+
+        section.appendChild(card);
+      });
+
+      app.appendChild(section);
+    });
+  }
+
   function renderReview() {
     closeWordCard();
     currentScene = null;
@@ -854,6 +954,8 @@
     if (hash.indexOf('#/scene/') === 0) {
       var rest = hash.slice('#/scene/'.length).split('/');
       renderScene(rest[0], rest[1]);
+    } else if (hash.indexOf('#/patterns') === 0) {
+      renderPatterns();
     } else if (hash.indexOf('#/review') === 0 || hash.indexOf('#/wordbook') === 0) {
       renderReview();
     } else {
