@@ -1,0 +1,29 @@
+tools/build-dict.mjs
+  s_1949834f377b4e::t_0e298925ee0d2d 1-126
+README.md
+  s_1949834f377b4e::t_0f9a28e0a1aa4b 34-48
+  s_1949834f377b4e::t_b70172f5d73807 80-81,84-85
+  s_1949834f377b4e::t_40636aec9254d3 12
+js/dict.js
+  s_1949834f377b4e::t_bdcc8b3f2c5f8a 32-43,48,53,55,59,61,64,68-86
+  s_1949834f377b4e::t_4eebd68b02ea15 140-145
+  s_1949834f377b4e::t_37723cd08486af 87
+js/app.js
+  s_1949834f377b4e::t_0be8342a2f03a5 124,127-130,138,151-167,180-185,187-188,190,194,210-220
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "f0bc9e439e54814cdb56f0f861b8789fbedf2ca6",
+  "prompts": {},
+  "sessions": {
+    "s_1949834f377b4e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c26f9185-0f37-49c8-b39f-1b3f92c23093",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Zaza Zhang <zaza.zhang@zoom.us>"
+    }
+  }
+}
