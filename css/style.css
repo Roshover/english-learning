@@ -490,3 +490,50 @@ body {
   .ctrl-group.grow { min-width: 100%; }
   .ctrl-select { max-width: none; }
 }
+
+/* ---- Word Detail: editor & saved entries ---- */
+.wd-base-info { display: flex; align-items: center; gap: .5rem; margin-bottom: .5rem; }
+.wd-pos-badge-sm { font-size: .75rem; background: var(--accent); color: #fff; padding: .1rem .45rem; border-radius: .6rem; }
+.wd-saved-badge { font-size: .75rem; color: var(--accent); margin-left: .5rem; font-weight: 400; }
+.wd-section-title { font-size: 1rem; margin: 1.2rem 0 .6rem; display: flex; align-items: center; gap: .4rem; }
+.wd-saved-entries { margin-bottom: 1rem; }
+.wd-entry-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: .4rem; }
+.wd-entry-del { background: none; border: none; cursor: pointer; font-size: .9rem; color: #999; padding: .2rem .4rem; border-radius: 4px; }
+.wd-entry-del:hover { background: #fee; color: #c33; }
+
+/* Editor form */
+.wd-editor { background: var(--card-bg, #f9fafb); border: 1px dashed var(--border, #e5e7eb); border-radius: .75rem; padding: 1rem; margin-top: .5rem; }
+.wd-form { display: flex; flex-direction: column; gap: .75rem; }
+.wd-field { display: flex; flex-direction: column; gap: .25rem; }
+.wd-field-label { font-size: .8rem; font-weight: 600; color: #666; }
+.wd-select { padding: .45rem .6rem; border: 1px solid var(--border, #ddd); border-radius: .5rem; font-size: .9rem; background: #fff; }
+.wd-form-actions { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .25rem; }
+.wd-del-btn { background: none; border: 1px solid #e55; color: #c33; }
+.wd-del-btn:hover { background: #fee; }
+
+/* Toast */
+.wd-toast { position: fixed; bottom: 5rem; left: 50%; transform: translateX(-50%); background: var(--accent); color: #fff; padding: .5rem 1.2rem; border-radius: 2rem; font-size: .9rem; z-index: 999; animation: toastIn .3s ease; }
+@keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+
+/* ---- Word Review list ---- */
+.wr-list { display: flex; flex-direction: column; gap: .6rem; }
+.wr-card { display: block; background: var(--card-bg, #fff); border: 1px solid var(--border, #e5e7eb); border-radius: .75rem; padding: .8rem 1rem; text-decoration: none; color: inherit; transition: box-shadow .15s; }
+.wr-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+.wr-word { font-size: 1.1rem; font-weight: 700; display: flex; align-items: center; gap: .4rem; }
+.wr-meta { display: flex; align-items: center; gap: .4rem; margin-top: .3rem; flex-wrap: wrap; }
+.wr-count { font-size: .78rem; color: #888; }
+.wr-preview { font-size: .85rem; color: #666; margin-top: .3rem; line-height: 1.4; }
+
+/* empty state */
+.empty-state { text-align: center; padding: 3rem 1rem; }
+.empty-emoji { font-size: 3rem; margin-bottom: .5rem; }
+
+/* dark mode overrides */
+@media (prefers-color-scheme: dark) {
+  .wd-editor { background: #1e1e2e; border-color: #444; }
+  .wd-select { background: #2a2a3a; border-color: #555; color: #eee; }
+  .wd-field-label { color: #aaa; }
+  .wr-card { background: #1e1e2e; border-color: #444; }
+  .wd-entry-del:hover { background: #3a1111; }
+  .wd-del-btn:hover { background: #3a1111; }
+}

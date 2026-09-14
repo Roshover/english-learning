@@ -751,6 +751,15 @@
       ])
     ]));
 
+    // 我的单词本入口
+    var savedCount = window.WordStore.count();
+    var reviewRow = el('div', { class: 'ws-review-row' });
+    reviewRow.appendChild(el('a', { class: 'ctrl-btn', href: '#/words-review' }, [
+      '📖 ' + t('wordStudyReview'),
+      savedCount ? el('span', { class: 'wb-count' }, [String(savedCount)]) : null
+    ]));
+    app.appendChild(reviewRow);
+
     window.Dict.ensureDict().then(function () {
       if (!window.RTE_DICT) {
         app.appendChild(el('div', { class: 'empty-state' }, [
@@ -806,7 +815,241 @@
     app.appendChild(area);
   }
 
-  function renderWordDetail(word) {
+  var POS_OPTIONS = [
+    { value: 'noun', label: { zh: 'noun (名词)', en: 'noun' } },
+    { value: 'verb', label: { zh: 'verb (动词)', en: 'verb' } },
+    { value: 'adjective', label: { zh: 'adjective (形容词)', en: 'adjective' } },
+    { value: 'adverb', label: { zh: 'adverb (副词)', en: 'adverb' } },
+    { value: 'preposition', label: { zh: 'preposition (介词)', en: 'preposition' } },
+    { value: 'conjunction', label: { zh: 'conjunction (连词)', en: 'conjunction' } },
+    { value: 'phrase', label: { zh: 'phrase (短语)', en: 'phrase' } }
+  ];
+
+  function renderWordDetail(rawWord) {
+    closeWordCard();
+    currentScene = null;
+    clear(app);
+
+    var word = decodeURIComponent(rawWord);
+    var saved = window.WordStore.get(word);
+    var entries = (saved && saved.entries) ? saved.entries.slice() : [];
+
+    app.appendChild(el('div', { class: 'scene-top' }, [
+      el('a', { class: 'btn-ghost', href: '#/words' }, ['← ' + t('wordStudyBack')]),
+      el('div', { class: 'scene-title-block' }, [
+        el('h1', { class: 'wd-title' }, [
+          word,
+          el('button', { class: 'btn-speak', onclick: function () { window.Speech.speak(word); } }, ['🔊']),
+          saved ? el('span', { class: 'wd-saved-badge' }, ['✓ ' + t('wordStudySaved')]) : null
+        ])
+      ])
+    ]));
+
+    var body = el('div', { class: 'wd-body' });
+
+    // 离线基础信息
+    window.Dict.ensureDict().then(function () {
+      var localHit = window.Dict.lookupLocal(word, null);
+      if (localHit) {
+        var infoRow = el('div', { class: 'wd-base-info' });
+        if (localHit.phonetic) infoRow.appendChild(el('span', { class: 'wd-phon' }, [localHit.phonetic]));
+        if (localHit.pos) infoRow.appendChild(el('span', { class: 'wd-pos-badge-sm' }, [localHit.pos]));
+        body.appendChild(infoRow);
+        var meaning = localHit.meaning;
+        var zhText = meaning ? (typeof meaning === 'string' ? meaning : (meaning.zh || meaning.en || '')) : '';
+        if (zhText) body.appendChild(el('div', { class: 'wd-zh-main' }, [zhText]));
+      }
+
+      // 已保存的义项展示
+      renderSavedEntries();
+
+      // 编辑区
+      renderEditor();
+    });
+
+    app.appendChild(body);
+
+    // 底部操作
+    var actions = el('div', { class: 'wd-actions' });
+    var nextBtn = el('button', { class: 'ctrl-btn primary' }, ['🎲 ' + t('wordStudyNext')]);
+    nextBtn.addEventListener('click', function () {
+      window.Dict.ensureDict().then(function () {
+        var arr = window.Dict.randomWords(1);
+        if (arr.length) location.hash = '#/words/' + encodeURIComponent(arr[0].word);
+      });
+    });
+    actions.appendChild(nextBtn);
+    app.appendChild(actions);
+
+    function renderSavedEntries() {
+      var container = document.getElementById('wd-saved-entries');
+      if (container) container.parentNode.removeChild(container);
+      if (!entries.length) return;
+
+      container = el('div', { id: 'wd-saved-entries', class: 'wd-saved-entries' });
+      container.appendChild(el('h3', { class: 'wd-section-title' }, [
+        pick({ zh: '我的笔记', en: 'My Notes' }),
+        el('span', { class: 'count-badge' }, [String(entries.length)])
+      ]));
+
+      entries.forEach(function (entry, idx) {
+        var card = el('div', { class: 'wd-pos-section' });
+
+        // 词性标签 + 删除按钮
+        var header = el('div', { class: 'wd-entry-header' });
+        header.appendChild(el('span', { class: 'wd-pos-badge' }, [entry.pos || 'other']));
+        var delBtn = el('button', { class: 'wd-entry-del', title: t('wordStudyDeleteEntry') }, ['✕']);
+        delBtn.addEventListener('click', function () {
+          entries.splice(idx, 1);
+          doSave();
+          renderSavedEntries();
+        });
+        header.appendChild(delBtn);
+        card.appendChild(header);
+
+        // 含义
+        if (entry.meaning) {
+          card.appendChild(el('div', { class: 'wd-def-text' }, [entry.meaning]));
+        }
+
+        // 例句
+        if (entry.example) {
+          var exWrap = el('div', { class: 'wd-def-example' });
+          exWrap.appendChild(renderClickableEnglish(entry.example));
+          exWrap.appendChild(el('button', { class: 'btn-speak inline', onclick: function (e) {
+            e.stopPropagation();
+            window.Speech.speak(entry.example);
+          } }, ['🔊']));
+          card.appendChild(exWrap);
+        }
+
+        // 常用短语
+        if (entry.phrases && entry.phrases.length) {
+          card.appendChild(el('div', { class: 'wd-tags-block' }, [
+            el('span', { class: 'wd-tag-label' }, [t('wordStudyPhrases') + ': ']),
+            entry.phrases.map(function (p) {
+              return el('span', { class: 'wd-tag', onclick: function () { window.Speech.speak(p); } }, [p]);
+            }).reduce(function (frag, a) { frag.appendChild(a); return frag; }, document.createDocumentFragment())
+          ]));
+        }
+
+        container.appendChild(card);
+      });
+
+      body.appendChild(container);
+    }
+
+    function renderEditor() {
+      var existing = document.getElementById('wd-editor');
+      if (existing) existing.parentNode.removeChild(existing);
+
+      var editor = el('div', { id: 'wd-editor', class: 'wd-editor' });
+      editor.appendChild(el('h3', { class: 'wd-section-title' }, [
+        '✏️ ' + t('wordStudyAddEntry')
+      ]));
+
+      var form = el('div', { class: 'wd-form' });
+
+      // 词性选择
+      var posSelect = el('select', { class: 'ctrl-select wd-select' });
+      posSelect.appendChild(el('option', { value: '' }, ['-- ' + t('wordStudyPos') + ' --']));
+      POS_OPTIONS.forEach(function (o) {
+        posSelect.appendChild(el('option', { value: o.value }, [pick(o.label)]));
+      });
+      form.appendChild(el('label', { class: 'wd-field' }, [
+        el('span', { class: 'wd-field-label' }, [t('wordStudyPos')]),
+        posSelect
+      ]));
+
+      // 含义
+      var meaningInput = el('textarea', {
+        class: 'note-textarea', rows: '2',
+        placeholder: pick({ zh: '输入该词性下的含义（中文或英文均可）', en: 'Enter the meaning for this part of speech' })
+      });
+      form.appendChild(el('label', { class: 'wd-field' }, [
+        el('span', { class: 'wd-field-label' }, [t('wordStudyMeaning')]),
+        meaningInput
+      ]));
+
+      // 例句
+      var exampleInput = el('textarea', {
+        class: 'note-textarea', rows: '2',
+        placeholder: pick({ zh: '输入一个例句（英文）', en: 'Enter an example sentence (English)' })
+      });
+      form.appendChild(el('label', { class: 'wd-field' }, [
+        el('span', { class: 'wd-field-label' }, [t('wordStudyExample')]),
+        exampleInput
+      ]));
+
+      // 常用短语
+      var phrasesInput = el('input', {
+        class: 'note-textarea', type: 'text',
+        placeholder: t('wordStudyPhrasePlaceholder')
+      });
+      form.appendChild(el('label', { class: 'wd-field' }, [
+        el('span', { class: 'wd-field-label' }, [t('wordStudyPhrases')]),
+        phrasesInput
+      ]));
+
+      // 按钮行
+      var btnRow = el('div', { class: 'wd-form-actions' });
+      var saveBtn = el('button', { class: 'ctrl-btn primary' }, ['💾 ' + t('wordStudySaveWord')]);
+      saveBtn.addEventListener('click', function () {
+        var meaning = meaningInput.value.trim();
+        if (!meaning && !exampleInput.value.trim()) return;
+        var newEntry = {
+          pos: posSelect.value || 'other',
+          meaning: meaning,
+          example: exampleInput.value.trim(),
+          phrases: phrasesInput.value.split(/[,，、]/).map(function (s) { return s.trim(); }).filter(Boolean)
+        };
+        entries.push(newEntry);
+        doSave();
+
+        // 清空表单
+        posSelect.value = '';
+        meaningInput.value = '';
+        exampleInput.value = '';
+        phrasesInput.value = '';
+
+        // 显示保存成功
+        var toast = el('div', { class: 'wd-toast' }, ['✓ ' + t('wordStudySaveSuccess')]);
+        body.appendChild(toast);
+        setTimeout(function () { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 1500);
+
+        renderSavedEntries();
+        renderEditor();
+      });
+      btnRow.appendChild(saveBtn);
+
+      if (entries.length) {
+        var delAllBtn = el('button', { class: 'ctrl-btn wd-del-btn' }, ['🗑 ' + t('wordStudyDeleteWord')]);
+        delAllBtn.addEventListener('click', function () {
+          entries = [];
+          window.WordStore.remove(word);
+          renderSavedEntries();
+          renderEditor();
+          // 刷新标题里的 saved badge
+          renderWordDetail(rawWord);
+        });
+        btnRow.appendChild(delAllBtn);
+      }
+
+      form.appendChild(btnRow);
+      editor.appendChild(form);
+      body.appendChild(editor);
+    }
+
+    function doSave() {
+      window.WordStore.save(word, {
+        word: word,
+        entries: entries
+      });
+    }
+  }
+
+  // ---------- 我的单词本 ----------
+  function renderWordReview() {
     closeWordCard();
     currentScene = null;
     clear(app);
@@ -814,126 +1057,51 @@
     app.appendChild(el('div', { class: 'scene-top' }, [
       el('a', { class: 'btn-ghost', href: '#/words' }, ['← ' + t('wordStudyBack')]),
       el('div', { class: 'scene-title-block' }, [
-        el('h1', { class: 'wd-title' }, [
-          decodeURIComponent(word),
-          el('button', { class: 'btn-speak', onclick: function () { window.Speech.speak(decodeURIComponent(word)); } }, ['🔊'])
-        ])
+        el('h1', {}, [t('wordStudyReviewTitle')])
       ])
     ]));
 
-    var body = el('div', { class: 'wd-body' });
-    var loading = el('div', { class: 'wd-loading' }, [
-      el('div', { class: 'wd-spinner' }),
-      el('span', {}, [t('wordStudyLoading')])
-    ]);
-    body.appendChild(loading);
-    app.appendChild(body);
-
-    window.Dict.ensureDict().then(function () {
-      return window.Dict.fetchWordDetail(decodeURIComponent(word));
-    }).then(function (detail) {
-      clear(body);
-      if (!detail) {
-        // 离线降级
-        var localHit = window.Dict.lookupLocal(decodeURIComponent(word), null);
-        body.appendChild(el('div', { class: 'wd-offline-warn' }, ['⚠️ ' + t('wordStudyOffline')]));
-        if (localHit) {
-          body.appendChild(el('div', { class: 'wd-fallback' }, [
-            localHit.phonetic ? el('div', { class: 'wd-phon' }, [localHit.phonetic]) : null,
-            localHit.pos ? el('div', { class: 'wd-pos-badge' }, [localHit.pos]) : null,
-            localHit.meaning ? el('div', { class: 'wd-zh-main' }, [
-              typeof localHit.meaning === 'string' ? localHit.meaning : (localHit.meaning.zh || localHit.meaning.en || '')
-            ]) : null
-          ]));
-        }
-        return;
-      }
-      renderWordDetailContent(body, detail);
-    });
-
-    // 底部操作栏
-    var actions = el('div', { class: 'wd-actions' });
-    var nextBtn = el('button', { class: 'ctrl-btn primary' }, ['🎲 ' + t('wordStudyNext')]);
-    nextBtn.addEventListener('click', function () {
-      var arr = window.Dict.randomWords(1);
-      if (arr.length) location.hash = '#/words/' + encodeURIComponent(arr[0].word);
-    });
-    actions.appendChild(nextBtn);
-    app.appendChild(actions);
-  }
-
-  function renderWordDetailContent(body, detail) {
-    // 音标 + 中文总释义
-    var header = el('div', { class: 'wd-header' });
-    if (detail.phonetic) header.appendChild(el('span', { class: 'wd-phon' }, [detail.phonetic]));
-    if (detail.audio) {
-      var audioBtn = el('button', { class: 'btn-speak', onclick: function () {
-        var a = new Audio(detail.audio);
-        a.play();
-      } }, ['🔈']);
-      header.appendChild(audioBtn);
-    }
-    body.appendChild(header);
-
-    if (detail.zhMeaning) {
-      body.appendChild(el('div', { class: 'wd-zh-main' }, [detail.zhMeaning]));
+    var items = window.WordStore.all();
+    if (!items.length) {
+      app.appendChild(el('div', { class: 'empty-state' }, [
+        el('div', { class: 'empty-emoji' }, ['📖']),
+        el('p', {}, [t('wordStudyReviewEmpty')])
+      ]));
+      return;
     }
 
-    // 各词性
-    (detail.meanings || []).forEach(function (m) {
-      var section = el('div', { class: 'wd-pos-section' });
-
-      section.appendChild(el('div', { class: 'wd-pos-header' }, [
-        el('span', { class: 'wd-pos-badge' }, [m.pos])
+    var list = el('div', { class: 'wr-list' });
+    items.forEach(function (item) {
+      var card = el('a', { class: 'wr-card', href: '#/words/' + encodeURIComponent(item.word) });
+      card.appendChild(el('div', { class: 'wr-word' }, [
+        item.word,
+        el('button', { class: 'btn-speak inline', onclick: function (e) {
+          e.preventDefault(); e.stopPropagation();
+          window.Speech.speak(item.word);
+        } }, ['🔊'])
       ]));
 
-      // 义项列表
-      (m.definitions || []).forEach(function (d, idx) {
-        var defCard = el('div', { class: 'wd-def-card' });
-        defCard.appendChild(el('div', { class: 'wd-def-num' }, [String(idx + 1)]));
-        var defContent = el('div', { class: 'wd-def-content' });
-        defContent.appendChild(el('div', { class: 'wd-def-text' }, [d.definition]));
-        if (d.example) {
-          var exWrap = el('div', { class: 'wd-def-example' });
-          exWrap.appendChild(renderClickableEnglish(d.example));
-          exWrap.appendChild(el('button', { class: 'btn-speak inline', onclick: function (e) {
-            e.stopPropagation();
-            window.Speech.speak(d.example);
-          } }, ['🔊']));
-          defContent.appendChild(exWrap);
-        }
-        if (d.synonyms && d.synonyms.length) {
-          defContent.appendChild(el('div', { class: 'wd-tags' }, [
-            el('span', { class: 'wd-tag-label' }, [t('wordStudySyn') + ': ']),
-            d.synonyms.map(function (s) { return el('a', {
-              class: 'wd-tag', href: '#/words/' + encodeURIComponent(s)
-            }, [s]); }).reduce(function (frag, a) { frag.appendChild(a); return frag; }, document.createDocumentFragment())
-          ]));
-        }
-        defCard.appendChild(defContent);
-        section.appendChild(defCard);
-      });
+      var entryCount = (item.entries || []).length;
+      var posList = (item.entries || []).map(function (e) { return e.pos; }).filter(function (v, i, a) { return a.indexOf(v) === i; });
+      card.appendChild(el('div', { class: 'wr-meta' }, [
+        posList.map(function (p) { return el('span', { class: 'wd-pos-badge-sm' }, [p]); })
+          .reduce(function (frag, a) { frag.appendChild(a); return frag; }, document.createDocumentFragment()),
+        el('span', { class: 'wr-count' }, [entryCount + ' ' + pick({ zh: '个义项', en: 'meanings' })])
+      ]));
 
-      // 词性级别的同义 / 反义词
-      if (m.synonyms && m.synonyms.length) {
-        section.appendChild(el('div', { class: 'wd-tags-block' }, [
-          el('span', { class: 'wd-tag-label' }, [t('wordStudySyn') + ': ']),
-          m.synonyms.map(function (s) { return el('a', {
-            class: 'wd-tag', href: '#/words/' + encodeURIComponent(s)
-          }, [s]); }).reduce(function (frag, a) { frag.appendChild(a); return frag; }, document.createDocumentFragment())
-        ]));
-      }
-      if (m.antonyms && m.antonyms.length) {
-        section.appendChild(el('div', { class: 'wd-tags-block' }, [
-          el('span', { class: 'wd-tag-label' }, [t('wordStudyAnt') + ': ']),
-          m.antonyms.map(function (s) { return el('a', {
-            class: 'wd-tag', href: '#/words/' + encodeURIComponent(s)
-          }, [s]); }).reduce(function (frag, a) { frag.appendChild(a); return frag; }, document.createDocumentFragment())
-        ]));
+      // 预览第一个义项
+      if (item.entries && item.entries[0]) {
+        var first = item.entries[0];
+        if (first.meaning) {
+          var preview = first.meaning.length > 60 ? first.meaning.slice(0, 60) + '…' : first.meaning;
+          card.appendChild(el('div', { class: 'wr-preview' }, [preview]));
+        }
       }
 
-      body.appendChild(section);
+      list.appendChild(card);
     });
+
+    app.appendChild(list);
   }
 
   // ---------- 句型公式页 ----------
@@ -1157,6 +1325,8 @@
       renderScene(rest[0], rest[1]);
     } else if (hash.indexOf('#/words/') === 0) {
       renderWordDetail(hash.slice('#/words/'.length));
+    } else if (hash === '#/words-review') {
+      renderWordReview();
     } else if (hash === '#/words') {
       renderWordStudy();
     } else if (hash.indexOf('#/patterns') === 0) {
