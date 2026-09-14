@@ -83,22 +83,7 @@
       wordStudySyn: '近义词',
       wordStudyAnt: '反义词',
       wordStudyBack: '返回单词列表',
-      wordStudyNext: '换一个单词',
-      wordStudyReview: '我的单词本',
-      wordStudyReviewTitle: '📖 我的单词本',
-      wordStudyReviewEmpty: '还没有保存任何单词。去精学单词页面，点一个单词添加自定义内容吧。',
-      wordStudySaved: '已保存',
-      wordStudyAddEntry: '添加义项',
-      wordStudyPos: '词性',
-      wordStudyMeaning: '含义',
-      wordStudyExample: '例句',
-      wordStudyPhrases: '常用短语/搭配',
-      wordStudySaveWord: '保存单词',
-      wordStudyDeleteWord: '删除单词',
-      wordStudyDeleteEntry: '删除此义项',
-      wordStudyAddMore: '继续添加义项',
-      wordStudyPhrasePlaceholder: '如: look forward to, on behalf of（逗号分隔）',
-      wordStudySaveSuccess: '已保存！'
+      wordStudyNext: '换一个单词'
     },
     en: {
       brandTitle: 'Real-Talk',
@@ -176,22 +161,7 @@
       wordStudySyn: 'Synonyms',
       wordStudyAnt: 'Antonyms',
       wordStudyBack: 'Back to cards',
-      wordStudyNext: 'Another word',
-      wordStudyReview: 'My Words',
-      wordStudyReviewTitle: '📖 My Word Book',
-      wordStudyReviewEmpty: 'No words saved yet. Go to Deep Word Study and add custom content to a word.',
-      wordStudySaved: 'Saved',
-      wordStudyAddEntry: 'Add meaning',
-      wordStudyPos: 'Part of speech',
-      wordStudyMeaning: 'Meaning',
-      wordStudyExample: 'Example sentence',
-      wordStudyPhrases: 'Common phrases / collocations',
-      wordStudySaveWord: 'Save word',
-      wordStudyDeleteWord: 'Delete word',
-      wordStudyDeleteEntry: 'Remove this entry',
-      wordStudyAddMore: 'Add another meaning',
-      wordStudyPhrasePlaceholder: 'e.g. look forward to, on behalf of (comma-separated)',
-      wordStudySaveSuccess: 'Saved!'
+      wordStudyNext: 'Another word'
     }
   };
 
