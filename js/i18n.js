@@ -52,7 +52,14 @@
       remFav: '已收藏（点击移除）',
       removeWord: '移除',
       fromScene: '来自',
-      onlineHint: '来自在线词典'
+      onlineHint: '来自在线词典',
+      addNote: '添加笔记',
+      editNote: '编辑笔记',
+      myNote: '我的笔记',
+      notePlaceholder: '记录你的学习心得，例如：这句的语气、易错点、想背的表达…',
+      save: '保存',
+      cancel: '取消',
+      del: '删除'
     },
     en: {
       brandTitle: 'Real-Talk',
@@ -99,7 +106,14 @@
       remFav: 'Saved (tap to remove)',
       removeWord: 'Remove',
       fromScene: 'from',
-      onlineHint: 'From an online dictionary'
+      onlineHint: 'From an online dictionary',
+      addNote: 'Add note',
+      editNote: 'Edit note',
+      myNote: 'My note',
+      notePlaceholder: 'Write your own notes: tone, tricky points, phrases to memorize…',
+      save: 'Save',
+      cancel: 'Cancel',
+      del: 'Delete'
     }
   };
 

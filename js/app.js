@@ -429,8 +429,64 @@
       el('div', { class: 'turn-role' }, [pick(line.role)]),
       el('div', { class: 'bubble', onclick: function () {
         if (player) player.playDialogueIdx(index); else window.Speech.speak(line.en);
-      } }, [enNode, zhNode])
+      } }, [enNode, zhNode]),
+      buildNoteSection(currentScene.id, index)
     ]);
+  }
+
+  // 逐句笔记：按钮 + 展示 + 内联编辑器（存 localStorage，刷新仍在）
+  function buildNoteSection(sceneId, index) {
+    var wrap = el('div', { class: 'note-wrap' });
+    var toggleBtn = el('button', { class: 'note-btn' }, []);
+    var display = el('div', { class: 'note-display' });
+    var editor = el('div', { class: 'note-editor hidden' });
+    var ta = el('textarea', { class: 'note-textarea', rows: '3', placeholder: t('notePlaceholder') });
+
+    function refresh() {
+      var text = window.Notes.get(sceneId, index);
+      clear(display);
+      if (text) {
+        display.classList.remove('hidden');
+        display.appendChild(el('div', { class: 'note-label' }, ['📝 ' + t('myNote')]));
+        display.appendChild(el('div', { class: 'note-text' }, [text]));
+        toggleBtn.textContent = '✏️ ' + t('editNote');
+      } else {
+        display.classList.add('hidden');
+        toggleBtn.textContent = '📝 ' + t('addNote');
+      }
+    }
+    function openEditor(e) {
+      if (e) e.stopPropagation();
+      ta.value = window.Notes.get(sceneId, index);
+      editor.classList.remove('hidden');
+      display.classList.add('hidden');
+      toggleBtn.classList.add('hidden');
+      ta.focus();
+    }
+    function closeEditor() {
+      editor.classList.add('hidden');
+      toggleBtn.classList.remove('hidden');
+      refresh();
+    }
+
+    toggleBtn.addEventListener('click', openEditor);
+    display.addEventListener('click', openEditor);
+
+    var saveBtn = el('button', { class: 'note-save' }, [t('save')]);
+    saveBtn.addEventListener('click', function (e) { e.stopPropagation(); window.Notes.set(sceneId, index, ta.value); closeEditor(); });
+    var delBtn = el('button', { class: 'note-del' }, [t('del')]);
+    delBtn.addEventListener('click', function (e) { e.stopPropagation(); window.Notes.remove(sceneId, index); closeEditor(); });
+    var cancelBtn = el('button', { class: 'note-cancel' }, [t('cancel')]);
+    cancelBtn.addEventListener('click', function (e) { e.stopPropagation(); closeEditor(); });
+
+    editor.appendChild(ta);
+    editor.appendChild(el('div', { class: 'note-actions' }, [saveBtn, delBtn, cancelBtn]));
+
+    wrap.appendChild(toggleBtn);
+    wrap.appendChild(display);
+    wrap.appendChild(editor);
+    refresh();
+    return wrap;
   }
 
   function buildControls(scene) {
