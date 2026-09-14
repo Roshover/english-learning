@@ -21,7 +21,7 @@ window.RTE_INDEX = {
       name: { zh: 'IT / 职场', en: 'IT / Workplace' },
       icon: '💼',
       desc: { zh: 'PM、设计、开发围绕产品需求的协作对话', en: 'PM, design & dev collaborating on a product' },
-      sceneIds: [] // 之后加 'it-product-review' 等
+      sceneIds: ['it-dialpad-search']
     },
     {
       key: 'daily',
