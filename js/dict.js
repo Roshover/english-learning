@@ -148,10 +148,80 @@
     }).catch(function () { return null; });
   }
 
+  /** 深度查询：返回完整词条（多词性、多义项、动词短语、同义反义词）。
+   *  合并离线中文 + 在线英文详情。返回 Promise<{word, phonetic, zhMeaning, audio, meanings[]}|null> */
+  function fetchWordDetail(raw) {
+    var w = String(raw || '').toLowerCase().replace(/[^a-z'-]/g, '');
+    if (!w) return Promise.resolve(null);
+    var url = 'https://api.dictionaryapi.dev/api/v2/entries/en/' + encodeURIComponent(w);
+    return fetch(url).then(function (r) { return r.ok ? r.json() : null; }).then(function (data) {
+      if (!Array.isArray(data) || !data.length) return null;
+      var e = data[0];
+      var phon = e.phonetic || '';
+      var audio = '';
+      if (Array.isArray(e.phonetics)) {
+        for (var i = 0; i < e.phonetics.length; i++) {
+          if (e.phonetics[i].text && !phon) phon = e.phonetics[i].text;
+          if (e.phonetics[i].audio && !audio) audio = e.phonetics[i].audio;
+        }
+      }
+      var meanings = (e.meanings || []).map(function (m) {
+        return {
+          pos: m.partOfSpeech || '',
+          definitions: (m.definitions || []).map(function (d) {
+            return {
+              definition: d.definition || '',
+              example: d.example || '',
+              synonyms: (d.synonyms || []).slice(0, 5),
+              antonyms: (d.antonyms || []).slice(0, 3)
+            };
+          }),
+          synonyms: (m.synonyms || []).slice(0, 6),
+          antonyms: (m.antonyms || []).slice(0, 4)
+        };
+      });
+      // 离线中文释义补充
+      var zhMeaning = '';
+      var localHit = matchDict(w);
+      if (localHit && localHit.meaning && localHit.meaning.zh) zhMeaning = localHit.meaning.zh;
+      if (!zhMeaning) {
+        var common = window.RTE_COMMON || {};
+        if (common[w]) zhMeaning = common[w];
+      }
+      return { word: e.word || w, phonetic: phon, audio: audio, zhMeaning: zhMeaning, meanings: meanings };
+    }).catch(function () { return null; });
+  }
+
+  /** 从离线字典随机抽 N 个单词。返回 [{word, phonetic, zh}] */
+  function randomWords(count) {
+    var dict = window.RTE_DICT;
+    if (!dict) return [];
+    var keys = Object.keys(dict);
+    if (!keys.length) return [];
+    var result = [];
+    var used = {};
+    var maxAttempts = count * 10;
+    var attempts = 0;
+    while (result.length < count && attempts < maxAttempts) {
+      attempts++;
+      var idx = Math.floor(Math.random() * keys.length);
+      var w = keys[idx];
+      if (used[w]) continue;
+      if (w.length < 3 || w.length > 15) continue;
+      if (/[^a-z]/.test(w)) continue;
+      used[w] = true;
+      var entry = dict[w];
+      result.push({ word: w, phonetic: entry[0] || '', zh: entry[1] || '' });
+    }
+    return result;
+  }
+
   window.Dict = {
     lookupLocal: lookupLocal,
     fetchOnline: fetchOnline,
     fetchExample: fetchExample,
+    fetchWordDetail: fetchWordDetail,
+    randomWords: randomWords,
     ensureDict: ensureDict,
     dictReady: dictReady
   };

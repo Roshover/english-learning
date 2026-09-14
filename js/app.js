@@ -735,6 +735,207 @@
   // ---------- 复习中心（生词本 + 笔记） ----------
   var reviewTab = 'words'; // 'words' | 'notes'
 
+  // ---------- 精学单词 ----------
+  var wsCards = [];  // 当前 4 张卡片的数据
+
+  function renderWordStudy() {
+    closeWordCard();
+    currentScene = null;
+    clear(app);
+
+    app.appendChild(el('div', { class: 'scene-top' }, [
+      el('a', { class: 'btn-ghost', href: '#/' }, ['← ' + t('backHome')]),
+      el('div', { class: 'scene-title-block' }, [
+        el('h1', {}, [t('wordStudyTitle')]),
+        el('p', { class: 'scene-desc' }, [t('wordStudySub')])
+      ])
+    ]));
+
+    window.Dict.ensureDict().then(function () {
+      if (!window.RTE_DICT) {
+        app.appendChild(el('div', { class: 'empty-state' }, [
+          el('div', { class: 'empty-emoji' }, ['📖']),
+          el('p', {}, [t('wordStudyNoDict')])
+        ]));
+        return;
+      }
+      wsCards = window.Dict.randomWords(4);
+      renderWordCards();
+    });
+  }
+
+  function renderWordCards() {
+    var existing = document.getElementById('ws-cards-area');
+    if (existing) existing.parentNode.removeChild(existing);
+
+    var area = el('div', { class: 'ws-area', id: 'ws-cards-area' });
+
+    // 换一批按钮
+    var refreshRow = el('div', { class: 'ws-refresh-row' });
+    var refreshBtn = el('button', { class: 'ctrl-btn primary' }, ['🔄 ' + t('wordStudyRefresh')]);
+    refreshBtn.addEventListener('click', function () {
+      wsCards = window.Dict.randomWords(4);
+      renderWordCards();
+    });
+    refreshRow.appendChild(refreshBtn);
+    area.appendChild(refreshRow);
+
+    // 4 张卡片
+    var grid = el('div', { class: 'ws-grid' });
+    wsCards.forEach(function (card, idx) {
+      var zhShort = card.zh || '';
+      // 截取第一个含义（取第一行或前 40 字）
+      var firstLine = zhShort.split(/[;；\n]/)[0] || zhShort;
+      if (firstLine.length > 40) firstLine = firstLine.slice(0, 40) + '…';
+
+      var cardEl = el('div', { class: 'ws-card', style: 'animation-delay:' + (idx * 0.08) + 's' }, [
+        el('div', { class: 'ws-card-word' }, [card.word]),
+        card.phonetic ? el('div', { class: 'ws-card-phon' }, [card.phonetic]) : null,
+        el('div', { class: 'ws-card-zh' }, [firstLine]),
+        el('button', { class: 'btn-speak ws-card-speak', onclick: function (e) {
+          e.stopPropagation();
+          window.Speech.speak(card.word);
+        } }, ['🔊'])
+      ]);
+      cardEl.addEventListener('click', function () {
+        location.hash = '#/words/' + encodeURIComponent(card.word);
+      });
+      grid.appendChild(cardEl);
+    });
+    area.appendChild(grid);
+    app.appendChild(area);
+  }
+
+  function renderWordDetail(word) {
+    closeWordCard();
+    currentScene = null;
+    clear(app);
+
+    app.appendChild(el('div', { class: 'scene-top' }, [
+      el('a', { class: 'btn-ghost', href: '#/words' }, ['← ' + t('wordStudyBack')]),
+      el('div', { class: 'scene-title-block' }, [
+        el('h1', { class: 'wd-title' }, [
+          decodeURIComponent(word),
+          el('button', { class: 'btn-speak', onclick: function () { window.Speech.speak(decodeURIComponent(word)); } }, ['🔊'])
+        ])
+      ])
+    ]));
+
+    var body = el('div', { class: 'wd-body' });
+    var loading = el('div', { class: 'wd-loading' }, [
+      el('div', { class: 'wd-spinner' }),
+      el('span', {}, [t('wordStudyLoading')])
+    ]);
+    body.appendChild(loading);
+    app.appendChild(body);
+
+    window.Dict.ensureDict().then(function () {
+      return window.Dict.fetchWordDetail(decodeURIComponent(word));
+    }).then(function (detail) {
+      clear(body);
+      if (!detail) {
+        // 离线降级
+        var localHit = window.Dict.lookupLocal(decodeURIComponent(word), null);
+        body.appendChild(el('div', { class: 'wd-offline-warn' }, ['⚠️ ' + t('wordStudyOffline')]));
+        if (localHit) {
+          body.appendChild(el('div', { class: 'wd-fallback' }, [
+            localHit.phonetic ? el('div', { class: 'wd-phon' }, [localHit.phonetic]) : null,
+            localHit.pos ? el('div', { class: 'wd-pos-badge' }, [localHit.pos]) : null,
+            localHit.meaning ? el('div', { class: 'wd-zh-main' }, [
+              typeof localHit.meaning === 'string' ? localHit.meaning : (localHit.meaning.zh || localHit.meaning.en || '')
+            ]) : null
+          ]));
+        }
+        return;
+      }
+      renderWordDetailContent(body, detail);
+    });
+
+    // 底部操作栏
+    var actions = el('div', { class: 'wd-actions' });
+    var nextBtn = el('button', { class: 'ctrl-btn primary' }, ['🎲 ' + t('wordStudyNext')]);
+    nextBtn.addEventListener('click', function () {
+      var arr = window.Dict.randomWords(1);
+      if (arr.length) location.hash = '#/words/' + encodeURIComponent(arr[0].word);
+    });
+    actions.appendChild(nextBtn);
+    app.appendChild(actions);
+  }
+
+  function renderWordDetailContent(body, detail) {
+    // 音标 + 中文总释义
+    var header = el('div', { class: 'wd-header' });
+    if (detail.phonetic) header.appendChild(el('span', { class: 'wd-phon' }, [detail.phonetic]));
+    if (detail.audio) {
+      var audioBtn = el('button', { class: 'btn-speak', onclick: function () {
+        var a = new Audio(detail.audio);
+        a.play();
+      } }, ['🔈']);
+      header.appendChild(audioBtn);
+    }
+    body.appendChild(header);
+
+    if (detail.zhMeaning) {
+      body.appendChild(el('div', { class: 'wd-zh-main' }, [detail.zhMeaning]));
+    }
+
+    // 各词性
+    (detail.meanings || []).forEach(function (m) {
+      var section = el('div', { class: 'wd-pos-section' });
+
+      section.appendChild(el('div', { class: 'wd-pos-header' }, [
+        el('span', { class: 'wd-pos-badge' }, [m.pos])
+      ]));
+
+      // 义项列表
+      (m.definitions || []).forEach(function (d, idx) {
+        var defCard = el('div', { class: 'wd-def-card' });
+        defCard.appendChild(el('div', { class: 'wd-def-num' }, [String(idx + 1)]));
+        var defContent = el('div', { class: 'wd-def-content' });
+        defContent.appendChild(el('div', { class: 'wd-def-text' }, [d.definition]));
+        if (d.example) {
+          var exWrap = el('div', { class: 'wd-def-example' });
+          exWrap.appendChild(renderClickableEnglish(d.example));
+          exWrap.appendChild(el('button', { class: 'btn-speak inline', onclick: function (e) {
+            e.stopPropagation();
+            window.Speech.speak(d.example);
+          } }, ['🔊']));
+          defContent.appendChild(exWrap);
+        }
+        if (d.synonyms && d.synonyms.length) {
+          defContent.appendChild(el('div', { class: 'wd-tags' }, [
+            el('span', { class: 'wd-tag-label' }, [t('wordStudySyn') + ': ']),
+            d.synonyms.map(function (s) { return el('a', {
+              class: 'wd-tag', href: '#/words/' + encodeURIComponent(s)
+            }, [s]); }).reduce(function (frag, a) { frag.appendChild(a); return frag; }, document.createDocumentFragment())
+          ]));
+        }
+        defCard.appendChild(defContent);
+        section.appendChild(defCard);
+      });
+
+      // 词性级别的同义 / 反义词
+      if (m.synonyms && m.synonyms.length) {
+        section.appendChild(el('div', { class: 'wd-tags-block' }, [
+          el('span', { class: 'wd-tag-label' }, [t('wordStudySyn') + ': ']),
+          m.synonyms.map(function (s) { return el('a', {
+            class: 'wd-tag', href: '#/words/' + encodeURIComponent(s)
+          }, [s]); }).reduce(function (frag, a) { frag.appendChild(a); return frag; }, document.createDocumentFragment())
+        ]));
+      }
+      if (m.antonyms && m.antonyms.length) {
+        section.appendChild(el('div', { class: 'wd-tags-block' }, [
+          el('span', { class: 'wd-tag-label' }, [t('wordStudyAnt') + ': ']),
+          m.antonyms.map(function (s) { return el('a', {
+            class: 'wd-tag', href: '#/words/' + encodeURIComponent(s)
+          }, [s]); }).reduce(function (frag, a) { frag.appendChild(a); return frag; }, document.createDocumentFragment())
+        ]));
+      }
+
+      body.appendChild(section);
+    });
+  }
+
   // ---------- 句型公式页 ----------
   function renderPatterns() {
     closeWordCard();
@@ -954,6 +1155,10 @@
     if (hash.indexOf('#/scene/') === 0) {
       var rest = hash.slice('#/scene/'.length).split('/');
       renderScene(rest[0], rest[1]);
+    } else if (hash.indexOf('#/words/') === 0) {
+      renderWordDetail(hash.slice('#/words/'.length));
+    } else if (hash === '#/words') {
+      renderWordStudy();
     } else if (hash.indexOf('#/patterns') === 0) {
       renderPatterns();
     } else if (hash.indexOf('#/review') === 0 || hash.indexOf('#/wordbook') === 0) {

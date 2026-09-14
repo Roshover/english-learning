@@ -361,6 +361,89 @@ body {
   #reviewBtn span[data-i18n] { display: none; }  /* 手机上只留 📚 图标 */
 }
 
+/* ---------- Word Study (精学单词) ---------- */
+.ws-area { margin-top: 18px; }
+.ws-refresh-row { display: flex; justify-content: flex-end; margin-bottom: 14px; }
+.ws-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+.ws-card {
+  position: relative; background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow); padding: 28px 22px;
+  cursor: pointer; transition: transform .2s ease, box-shadow .2s ease;
+  display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px;
+  animation: ws-card-in .35s ease-out both;
+}
+@keyframes ws-card-in { from { opacity: 0; transform: translateY(16px) scale(.96); } to { opacity: 1; transform: none; } }
+.ws-card:hover { transform: translateY(-4px) scale(1.02); box-shadow: var(--shadow); border-color: var(--primary); }
+.ws-card-word { font-size: 22px; font-weight: 700; color: var(--primary); }
+.ws-card-phon { font-size: 13px; color: var(--text-faint); }
+.ws-card-zh { font-size: 14px; color: var(--text-soft); margin-top: 4px; line-height: 1.5; }
+.ws-card-speak { position: absolute; top: 10px; right: 10px; font-size: 16px; }
+
+/* Word detail page */
+.wd-title { display: flex; align-items: center; gap: 10px; }
+.wd-body { margin-top: 18px; }
+.wd-loading { display: flex; align-items: center; gap: 12px; color: var(--text-faint); padding: 30px 0; }
+.wd-spinner {
+  width: 20px; height: 20px; border: 2px solid var(--border);
+  border-top-color: var(--primary); border-radius: 50%; animation: spin .6s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.wd-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.wd-phon { font-size: 16px; color: var(--text-faint); }
+.wd-zh-main {
+  font-size: 15px; color: var(--text); padding: 10px 14px;
+  background: var(--surface-2); border-radius: var(--radius-sm); margin-bottom: 18px; line-height: 1.6;
+}
+.wd-offline-warn {
+  font-size: 14px; color: var(--accent); padding: 10px 14px;
+  background: var(--surface-2); border-radius: var(--radius-sm); margin-bottom: 14px;
+}
+.wd-pos-section {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow-sm);
+  padding: 18px 20px; margin-bottom: 16px;
+}
+.wd-pos-header { margin-bottom: 14px; }
+.wd-pos-badge {
+  display: inline-block; font-size: 13px; font-weight: 700; color: #fff;
+  background: var(--primary); padding: 4px 14px; border-radius: 999px; text-transform: capitalize;
+}
+.wd-def-card {
+  display: flex; gap: 12px; padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.wd-def-card:last-child { border-bottom: none; }
+.wd-def-num {
+  flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%;
+  background: var(--primary-soft); color: var(--primary);
+  font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center;
+}
+.wd-def-content { flex: 1; min-width: 0; }
+.wd-def-text { font-size: 15px; line-height: 1.6; }
+.wd-def-example {
+  margin-top: 8px; padding: 8px 12px; background: var(--surface-2);
+  border-radius: var(--radius-sm); font-size: 14px; color: var(--text-soft);
+  display: flex; align-items: center; flex-wrap: wrap; gap: 2px;
+}
+.wd-tags, .wd-tags-block {
+  margin-top: 8px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 13px;
+}
+.wd-tags-block { padding-top: 10px; border-top: 1px dashed var(--border); margin-top: 12px; }
+.wd-tag-label { color: var(--text-faint); font-weight: 600; }
+.wd-tag {
+  display: inline-block; padding: 3px 10px; border-radius: 999px;
+  background: var(--primary-soft); color: var(--primary); text-decoration: none;
+  font-size: 13px; transition: all .12s;
+}
+.wd-tag:hover { background: var(--primary); color: #fff; }
+.wd-actions { display: flex; justify-content: center; gap: 12px; margin-top: 24px; padding-bottom: 20px; }
+.wd-fallback { padding: 10px 0; }
+
+@media (max-width: 600px) {
+  .ws-grid { grid-template-columns: 1fr; }
+  #wordStudyBtn span[data-i18n] { display: none; }
+}
+
 /* ---------- Patterns (句型公式) ---------- */
 .patterns-nav-wrap { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }
 .patterns-nav { flex-wrap: wrap; overflow: visible; transition: max-height .25s ease; }

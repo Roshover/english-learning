@@ -71,7 +71,19 @@
       patternsSub: '背下模板，套用即说——非母语者最需要的"造句框架"。',
       patternsUsage: '用法',
       patternsExamples: '例句',
-      patternsCount: '个句型'
+      patternsCount: '个句型',
+      wordStudy: '精学单词',
+      wordStudyTitle: '🎯 精学单词',
+      wordStudySub: '每次随机 4 个单词，点击深入学习——词性、义项、搭配、例句，一网打尽。',
+      wordStudyRefresh: '换一批',
+      wordStudyLoading: '正在获取详情…',
+      wordStudyOffline: '无法联网获取详情，显示离线基础信息。',
+      wordStudyNoDict: '字典还未加载，请稍候再试。',
+      wordStudyDef: '释义',
+      wordStudySyn: '近义词',
+      wordStudyAnt: '反义词',
+      wordStudyBack: '返回单词列表',
+      wordStudyNext: '换一个单词'
     },
     en: {
       brandTitle: 'Real-Talk',
@@ -137,7 +149,19 @@
       patternsSub: 'Memorize the template, plug in your words — the sentence frameworks every learner needs.',
       patternsUsage: 'Usage',
       patternsExamples: 'Examples',
-      patternsCount: 'patterns'
+      patternsCount: 'patterns',
+      wordStudy: 'Words',
+      wordStudyTitle: '🎯 Deep Word Study',
+      wordStudySub: '4 random words each time — tap one to explore parts of speech, meanings, collocations & examples.',
+      wordStudyRefresh: 'New words',
+      wordStudyLoading: 'Fetching details…',
+      wordStudyOffline: 'Offline — showing basic info only.',
+      wordStudyNoDict: 'Dictionary not loaded yet. Please try again.',
+      wordStudyDef: 'Definition',
+      wordStudySyn: 'Synonyms',
+      wordStudyAnt: 'Antonyms',
+      wordStudyBack: 'Back to cards',
+      wordStudyNext: 'Another word'
     }
   };
 
