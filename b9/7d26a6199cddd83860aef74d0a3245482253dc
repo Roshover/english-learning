@@ -1,0 +1,21 @@
+data/scenes-index.js
+  s_1949834f377b4e::t_fed79c961eecdd 24
+data/scenes/it-dialpad-search.js
+  s_1949834f377b4e::t_b176aa54b18812 1-151
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "b97d26a6199cddd83860aef74d0a3245482253dc",
+  "prompts": {},
+  "sessions": {
+    "s_1949834f377b4e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c26f9185-0f37-49c8-b39f-1b3f92c23093",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Zaza Zhang <zaza.zhang@zoom.us>"
+    }
+  }
+}
