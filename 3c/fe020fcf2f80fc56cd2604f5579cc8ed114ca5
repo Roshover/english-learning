@@ -1,0 +1,22 @@
+js/app.js
+  s_1949834f377b4e::t_890ecde6ee6cb7 500-501
+  s_1949834f377b4e::t_0bc380ac87ddd7 470-474,481
+css/style.css
+  s_1949834f377b4e::t_40501dbb109515 251-252
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "3cfe020fcf2f80fc56cd2604f5579cc8ed114ca5",
+  "prompts": {},
+  "sessions": {
+    "s_1949834f377b4e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c26f9185-0f37-49c8-b39f-1b3f92c23093",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Zaza Zhang <zaza.zhang@zoom.us>"
+    }
+  }
+}
