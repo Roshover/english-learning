@@ -1,0 +1,28 @@
+js/app.js
+  s_1949834f377b4e::t_37d993f1a852a3 451-470,472-490,492-497,501-524,526-544
+  s_1949834f377b4e::t_ef45b437743a00 93-96,98-99,108-109,111
+  s_1949834f377b4e::t_8e579d67b3be85 345
+  s_1949834f377b4e::t_9250010908b0c4 444,447
+  s_1949834f377b4e::t_b7d24d2ae0b338 819
+css/style.css
+  s_1949834f377b4e::t_ca4192e01365fb 242-246,248-257
+js/i18n.js
+  s_1949834f377b4e::t_bcfdfb088ec415 64
+  s_1949834f377b4e::t_6a92ede041c755 124
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "d5a0dd25ba91ec0dec0d6ccf7143ff30c75a9d01",
+  "prompts": {},
+  "sessions": {
+    "s_1949834f377b4e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c26f9185-0f37-49c8-b39f-1b3f92c23093",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Zaza Zhang <zaza.zhang@zoom.us>"
+    }
+  }
+}
