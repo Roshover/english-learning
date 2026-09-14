@@ -29,36 +29,49 @@
     return null;
   }
 
-  /** 本地查询：返回统一结构或 null */
+  /** 本地查询：场景词汇 → glossary.js → common-words.js。返回统一结构或 null */
   function lookupLocal(raw, sceneVocab) {
     var vs = variants(raw);
     var glossary = window.RTE_GLOSSARY || {};
-    var vocabHit = null, glossHit = null;
+    var common = window.RTE_COMMON || {};
+    var vocabHit = null, glossHit = null, commonHit = null;
     for (var i = 0; i < vs.length; i++) {
       if (!vocabHit) vocabHit = matchVocab(sceneVocab, vs[i]);
       if (!glossHit) glossHit = glossary[vs[i]] || null;
+      if (!commonHit && typeof common[vs[i]] === 'string') commonHit = { meaning: { zh: common[vs[i]] } };
     }
-    if (!vocabHit && !glossHit) return null;
+    if (!vocabHit && !glossHit && !commonHit) return null;
+    var rich = vocabHit || glossHit;
     return {
-      word: (vocabHit && vocabHit.word) || (glossHit && glossHit.word) || String(raw),
-      phonetic: (vocabHit && vocabHit.phonetic) || (glossHit && glossHit.phonetic) || '',
-      pos: (vocabHit && vocabHit.pos) || (glossHit && glossHit.pos) || '',
-      meaning: (vocabHit && vocabHit.meaning) || (glossHit && glossHit.meaning) || null,
-      example: (vocabHit && vocabHit.example) || (glossHit && glossHit.example) || '',
+      word: (rich && rich.word) || String(raw).replace(/[^A-Za-z'-]/g, ''),
+      phonetic: (rich && rich.phonetic) || '',
+      pos: (rich && rich.pos) || '',
+      meaning: (rich && rich.meaning) || (commonHit && commonHit.meaning) || null,
+      example: (rich && rich.example) || '',
       collocations: (glossHit && glossHit.collocations) || (vocabHit && vocabHit.collocations) || [],
-      source: vocabHit ? 'vocab' : 'glossary'
+      source: vocabHit ? 'vocab' : (glossHit ? 'glossary' : 'common')
     };
   }
 
-  /** 在线查询（英文释义）：返回 {word, phonetic, defs:[{pos,def,example}]} 或 null */
-  function fetchOnline(raw) {
-    var w = String(raw || '').toLowerCase().replace(/[^a-z']/g, '');
-    if (!w) return Promise.resolve(null);
+  // 源 1：MyMemory 翻译（免费无 key，给中文释义），支持 CORS
+  function fetchChinese(w) {
+    var url = 'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(w) + '&langpair=en|zh-CN';
+    return fetch(url).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
+      if (d && d.responseData && d.responseData.translatedText) {
+        var txt = String(d.responseData.translatedText).trim();
+        // 过滤掉“翻译失败/原样返回”的无效结果
+        if (!txt || txt.toLowerCase() === w.toLowerCase()) return null;
+        if (/NO QUERY SPECIFIED|INVALID|MYMEMORY WARNING/i.test(txt)) return null;
+        return txt;
+      }
+      return null;
+    }).catch(function () { return null; });
+  }
+
+  // 源 2：免费英文词典（音标 + 英文释义），支持 CORS
+  function fetchEnglish(w) {
     var url = 'https://api.dictionaryapi.dev/api/v2/entries/en/' + encodeURIComponent(w);
-    return fetch(url).then(function (r) {
-      if (!r.ok) return null;
-      return r.json();
-    }).then(function (data) {
+    return fetch(url).then(function (r) { return r.ok ? r.json() : null; }).then(function (data) {
       if (!Array.isArray(data) || !data.length) return null;
       var e = data[0];
       var phon = e.phonetic || '';
@@ -73,9 +86,23 @@
         });
       });
       return { word: e.word || w, phonetic: phon, defs: defs.slice(0, 3) };
-    }).catch(function () {
-      return null; // 离线或出错：安静失败，卡片会提示“未收录”
-    });
+    }).catch(function () { return null; });
+  }
+
+  /** 在线查询：并行取中文翻译 + 英文释义，合并。返回 {word,phonetic,zh,defs[]} 或 null */
+  function fetchOnline(raw) {
+    var w = String(raw || '').toLowerCase().replace(/[^a-z']/g, '');
+    if (!w) return Promise.resolve(null);
+    return Promise.all([fetchChinese(w), fetchEnglish(w)]).then(function (res) {
+      var zh = res[0], en = res[1];
+      if (!zh && !en) return null;
+      return {
+        word: (en && en.word) || w,
+        phonetic: (en && en.phonetic) || '',
+        zh: zh || '',
+        defs: (en && en.defs) || []
+      };
+    }).catch(function () { return null; });
   }
 
   window.Dict = { lookupLocal: lookupLocal, fetchOnline: fetchOnline };

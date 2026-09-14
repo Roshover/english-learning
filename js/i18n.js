@@ -45,7 +45,14 @@
       tapWordHint: '提示：点对话里的任意单词可单独朗读',
       speechUnsupported: '当前浏览器不支持朗读功能，建议使用 Chrome / Edge / Safari。',
       lessons: '个场景',
-      minutes: '分钟'
+      minutes: '分钟',
+      wordbook: '生词本',
+      wordbookEmpty: '生词本还是空的。点对话里的单词，在卡片上点 ⭐ 收藏。',
+      addFav: '加入生词本',
+      remFav: '已收藏（点击移除）',
+      removeWord: '移除',
+      fromScene: '来自',
+      onlineHint: '来自在线词典'
     },
     en: {
       brandTitle: 'Real-Talk',
@@ -85,7 +92,14 @@
       tapWordHint: 'Tip: tap any word in the dialogue to hear it alone',
       speechUnsupported: 'Your browser does not support speech. Try Chrome / Edge / Safari.',
       lessons: 'scenarios',
-      minutes: 'min'
+      minutes: 'min',
+      wordbook: 'Word book',
+      wordbookEmpty: 'Your word book is empty. Tap a word in the dialogue, then tap ⭐ on the card.',
+      addFav: 'Add to word book',
+      remFav: 'Saved (tap to remove)',
+      removeWord: 'Remove',
+      fromScene: 'from',
+      onlineHint: 'From an online dictionary'
     }
   };
 

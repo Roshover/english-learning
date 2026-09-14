@@ -19,6 +19,10 @@
         </span>
       </a>
       <div class="header-actions">
+        <a id="wordbookBtn" class="btn-ghost" href="#/wordbook" title="生词本 / Word book">
+          <span>⭐</span> <span data-i18n="wordbook">生词本</span>
+          <span id="wordbookCount" class="wb-count">0</span>
+        </a>
         <button id="langToggle" class="btn-ghost" title="切换语言 / Switch language">
           <span data-i18n="langToggle">EN</span>
         </button>
@@ -40,9 +44,11 @@
   <script src="js/i18n.js"></script>
   <script src="js/speech.js"></script>
 
-  <!-- Word lookup: general glossary + dictionary module -->
+  <!-- Word lookup: glossaries + dictionary + word book -->
   <script src="data/glossary.js"></script>
+  <script src="data/common-words.js"></script>
   <script src="js/dict.js"></script>
+  <script src="js/wordbook.js"></script>
 
   <!-- Scene data (add one file per new scene, then register it below in data/scenes-index.js) -->
   <script src="data/scenes/hotel-check-in.js"></script>

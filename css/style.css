@@ -270,6 +270,35 @@ body {
 .wc-onlinedef:first-of-type { border-top: none; margin-top: 0; }
 .wc-example { font-size: 13px; color: var(--text-soft); margin-top: 6px; }
 .wc-tip { font-size: 11px; color: var(--text-faint); margin-top: 10px; text-align: right; }
+.wc-star { border: none; background: transparent; cursor: pointer; font-size: 18px; line-height: 1;
+  padding: 0 4px; border-radius: 6px; color: var(--text-faint); }
+.wc-star:hover { background: var(--surface-2); }
+.wc-star.on { color: #f5a623; }
+
+/* ---------- Header word-book button ---------- */
+.header-actions { display: flex; align-items: center; gap: 8px; }
+#wordbookBtn { display: inline-flex; align-items: center; gap: 5px; }
+.wb-count { font-size: 11px; background: var(--primary-soft); color: var(--primary);
+  padding: 1px 7px; border-radius: 999px; min-width: 18px; text-align: center; }
+
+/* ---------- Word-book view ---------- */
+.wb-list { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+.wb-item { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm); padding: 14px 16px; }
+.wb-main { flex: 1; }
+.wb-word-line { display: flex; align-items: center; gap: 8px; }
+.wb-word { font-size: 17px; font-weight: 700; }
+.wb-phon { font-size: 13px; color: var(--text-faint); }
+.wb-meaning { font-size: 14.5px; margin-top: 4px; }
+.wb-scene { font-size: 12px; color: var(--text-faint); margin-top: 4px; }
+.wb-remove { border: none; background: transparent; cursor: pointer; font-size: 16px;
+  padding: 6px 8px; border-radius: 8px; opacity: .6; }
+.wb-remove:hover { background: var(--surface-2); opacity: 1; }
+
+@media (max-width: 600px) {
+  #wordbookBtn span[data-i18n] { display: none; }  /* 手机上只留 ⭐ 图标 */
+}
 
 /* ---------- Footer ---------- */
 .site-footer { border-top: 1px solid var(--border); margin-top: 40px; padding: 24px 0; }

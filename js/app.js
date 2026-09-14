@@ -126,10 +126,33 @@
 
     var card = el('div', { class: 'word-card' });
     var phonSpan = el('span', { class: 'wc-phon' }, [local && local.phonetic ? local.phonetic : '']);
+
+    // 收藏用的条目（在线补充数据后会更新 meaning/phonetic）
+    var entry = {
+      word: displayWord,
+      phonetic: (local && local.phonetic) || '',
+      meaning: local && local.meaning ? pick(local.meaning) : '',
+      scene: currentScene ? pick(currentScene.title) : ''
+    };
+    var starBtn = el('button', { class: 'wc-star', title: t('addFav') }, ['☆']);
+    function updateStar() {
+      var on = window.WordBook.has(entry.word);
+      starBtn.textContent = on ? '★' : '☆';
+      starBtn.classList.toggle('on', on);
+      starBtn.title = on ? t('remFav') : t('addFav');
+    }
+    starBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      window.WordBook.toggle(entry);
+      updateStar();
+    });
+    updateStar();
+
     card.appendChild(el('div', { class: 'wc-head' }, [
       el('span', { class: 'wc-word' }, [displayWord]),
       phonSpan,
       el('button', { class: 'btn-speak', title: '朗读', onclick: function (e) { e.stopPropagation(); window.Speech.speak(displayWord); } }, ['🔊']),
+      starBtn,
       el('button', { class: 'wc-close', title: '关闭', onclick: function (e) { e.stopPropagation(); closeWordCard(); } }, ['×'])
     ]));
     var body = el('div', { class: 'wc-body' });
@@ -154,20 +177,24 @@
       window.Dict.fetchOnline(rawWord).then(function (res) {
         if (!wordCardEl || wordCardEl !== card) return; // 卡片已关闭或被替换
         if (loading.parentNode) loading.parentNode.removeChild(loading);
-        if (!res || !res.defs.length) {
-          body.appendChild(el('div', { class: 'wc-meaning' }, [pick({ zh: '词库未收录，点 🔊 可听发音。', en: 'Not in the glossary. Tap 🔊 to hear it.' })]));
+        if (!res || (!res.zh && (!res.defs || !res.defs.length))) {
+          body.appendChild(el('div', { class: 'wc-meaning' }, [pick({ zh: '在线也没查到，点 🔊 可听发音。（file:// 打开无法联网，请用本地服务器或线上访问）', en: 'Not found online. Tap 🔊 to hear it. (Opening via file:// blocks network — use a local server or the hosted site.)' })]));
           positionCard();
           return;
         }
         if (res.phonetic && !phonSpan.textContent) phonSpan.textContent = res.phonetic;
-        res.defs.forEach(function (d) {
+        if (res.zh) body.appendChild(el('div', { class: 'wc-meaning' }, [res.zh]));
+        (res.defs || []).forEach(function (d) {
           body.appendChild(el('div', { class: 'wc-onlinedef' }, [
             d.pos ? el('span', { class: 'wc-pos' }, [d.pos]) : null,
             el('div', { class: 'wc-meaning' }, [d.def]),
             d.example ? el('div', { class: 'wc-example' }, [el('span', { class: 'ex-en' }, ['“' + d.example + '”'])]) : null
           ]));
         });
-        body.appendChild(el('div', { class: 'wc-tip' }, [pick({ zh: '来自在线词典（英文释义）', en: 'From an online dictionary' })]));
+        body.appendChild(el('div', { class: 'wc-tip' }, [t('onlineHint')]));
+        // 更新收藏条目
+        entry.phonetic = entry.phonetic || res.phonetic || '';
+        entry.meaning = res.zh || (res.defs[0] && res.defs[0].def) || entry.meaning;
         positionCard();
       });
     }
@@ -531,12 +558,56 @@
     };
   }
 
+  // ---------- 生词本 ----------
+  function renderWordbook() {
+    closeWordCard();
+    currentScene = null;
+    clear(app);
+
+    app.appendChild(el('div', { class: 'scene-top' }, [
+      el('a', { class: 'btn-ghost', href: '#/' }, ['← ' + t('backHome')]),
+      el('div', { class: 'scene-title-block' }, [el('h1', {}, ['⭐ ' + t('wordbook')])])
+    ]));
+
+    var items = window.WordBook.list();
+    if (!items.length) {
+      app.appendChild(el('div', { class: 'empty-state' }, [
+        el('div', { class: 'empty-emoji' }, ['⭐']),
+        el('p', {}, [t('wordbookEmpty')])
+      ]));
+      return;
+    }
+
+    var listEl = el('div', { class: 'wb-list' });
+    items.forEach(function (e) {
+      var row = el('div', { class: 'wb-item' }, [
+        el('div', { class: 'wb-main' }, [
+          el('div', { class: 'wb-word-line' }, [
+            el('span', { class: 'wb-word' }, [e.word]),
+            e.phonetic ? el('span', { class: 'wb-phon' }, [e.phonetic]) : null,
+            el('button', { class: 'btn-speak', title: '朗读', onclick: function () { window.Speech.speak(e.word); } }, ['🔊'])
+          ]),
+          e.meaning ? el('div', { class: 'wb-meaning' }, [e.meaning]) : null,
+          e.scene ? el('div', { class: 'wb-scene' }, [t('fromScene') + ' ' + e.scene]) : null
+        ]),
+        el('button', { class: 'wb-remove', title: t('removeWord'), onclick: function () {
+          window.WordBook.remove(e.word);
+          if (row.parentNode) row.parentNode.removeChild(row);
+          if (!window.WordBook.list().length) renderWordbook();
+        } }, ['🗑'])
+      ]);
+      listEl.appendChild(row);
+    });
+    app.appendChild(listEl);
+  }
+
   // ---------- 路由 ----------
   function router() {
     var hash = location.hash || '#/';
     window.Speech.stop();
     closeWordCard();
     if (hash.indexOf('#/scene/') === 0) renderScene(hash.slice('#/scene/'.length));
+    else if (hash.indexOf('#/wordbook') === 0) renderWordbook();
     else renderHome();
     window.scrollTo(0, 0);
   }
@@ -544,6 +615,14 @@
   document.getElementById('langToggle').addEventListener('click', function () { window.I18N.toggleLang(); });
   window.I18N.onChange(function (lang) { showTranslation = (lang === 'zh'); router(); });
   window.addEventListener('hashchange', router);
+
+  // 生词本数量角标
+  function updateWordbookCount() {
+    var n = document.getElementById('wordbookCount');
+    if (n) n.textContent = String(window.WordBook.count());
+  }
+  window.WordBook.onChange(updateWordbookCount);
+  updateWordbookCount();
 
   window.I18N.applyStaticText();
   router();
