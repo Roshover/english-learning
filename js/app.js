@@ -43,7 +43,29 @@
   }
   function clear(n) { while (n.firstChild) n.removeChild(n.firstChild); }
   function getScene(id) { return (window.RTE_SCENES || {})[id]; }
-  function categories() { return (window.RTE_INDEX.categories || []); }
+  function categories() { return ((window.RTE_INDEX && window.RTE_INDEX.categories) || []); }
+
+  // 根据清单(scenes-index.js)里登记的 sceneIds，自动加载 data/scenes/<id>.js
+  // 好处：新增场景无需改 index.html，只要新增文件 + 在清单里登记 id。
+  function loadScenes(done) {
+    var ids = [];
+    categories().forEach(function (c) {
+      (c.sceneIds || []).forEach(function (id) { if (ids.indexOf(id) < 0) ids.push(id); });
+    });
+    var pending = ids.length;
+    if (!pending) { done(); return; }
+    ids.forEach(function (id) {
+      if (window.RTE_SCENES && window.RTE_SCENES[id]) { if (--pending === 0) done(); return; }
+      var s = document.createElement('script');
+      s.src = 'data/scenes/' + id + '.js';
+      s.onload = function () { if (--pending === 0) done(); };
+      s.onerror = function () {
+        console.warn('[content] 场景文件缺失或出错，已跳过：data/scenes/' + id + '.js（请检查文件名与清单里的 id 是否一致）');
+        if (--pending === 0) done();
+      };
+      document.head.appendChild(s);
+    });
+  }
 
   function scenesOfCategory(cat) {
     return cat.sceneIds.map(getScene).filter(Boolean);
@@ -432,7 +454,8 @@
   }
 
   function renderLine(line, index) {
-    var side = line.roleKey === 'guest' ? 'right' : 'left';
+    // roleKey 为 guest / me / self 显示在右侧(学习者一方)，其余(staff/pm/dev…)显示在左侧
+    var side = (line.roleKey === 'guest' || line.roleKey === 'me' || line.roleKey === 'self') ? 'right' : 'left';
     var enNode = el('div', { class: 'bubble-en' });
     enNode.appendChild(renderClickableEnglish(line.en));
     enNode.appendChild(el('button', { class: 'btn-speak inline', title: '朗读整句',
@@ -842,5 +865,6 @@
   updateReviewCount();
 
   window.I18N.applyStaticText();
-  router();
+  // 先按清单加载所有场景文件，再渲染
+  loadScenes(function () { router(); });
 })();

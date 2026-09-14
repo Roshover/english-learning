@@ -51,11 +51,10 @@
   <script src="js/wordbook.js"></script>
   <script src="js/notes.js"></script>
 
-  <!-- Scene data (add one file per new scene, then register it below in data/scenes-index.js) -->
-  <script src="data/scenes/hotel-check-in.js"></script>
+  <!-- 内容清单：登记场景的唯一入口（加内容只改这里 + data/scenes/ 下新增文件，详见 CONTENT_GUIDE.md） -->
   <script src="data/scenes-index.js"></script>
 
-  <!-- App -->
+  <!-- App：会根据清单自动加载 data/scenes/<id>.js，无需在此手动添加场景脚本 -->
   <script src="js/app.js"></script>
 </body>
 </html>

@@ -48,16 +48,21 @@ node tools/build-dict.mjs          # 默认取前 15000 高频词，生成 data/
 > 说明：`dict-core.js` 会被 App **首次点词时懒加载并缓存**，不影响首页/对话打开速度。
 > 没生成也没关系——基础词仍可离线查，其余走在线兜底。数据来源 github.com/skywind3000/ECDICT（MIT）。
 
-## ➕ 新增一个场景（三步）
+## ➕ 新增一个场景（两步，只改数据、不碰核心代码）
 
-1. 复制 `data/scenes/hotel-check-in.js`，改成你的内容（改文件名和里面的 `id`）。
-2. 在 `index.html` 里加一行：
-   ```html
-   <script src="data/scenes/你的文件名.js"></script>
-   ```
-3. 在 `data/scenes-index.js` 里，把新场景的 `id` 加进对应分类的 `sceneIds`。
+> 详细规则见 **[CONTENT_GUIDE.md](CONTENT_GUIDE.md)**（也适合交给其他 AI 模型照着补内容）。
 
-刷新页面即可看到新场景。
+1. 复制模板 `data/scenes/_TEMPLATE.js` 为 `data/scenes/<你的id>.js`，填入内容（文件名 = 内部 `id`）。
+2. 在 `data/scenes-index.js` 里把 `<你的id>` 加进对应分类的 `sceneIds`。
+
+刷新页面即可看到新场景——朗读、逐句练习、点词、生词本、笔记、复习中心全部**自动生效**，
+**无需改动 `index.html` / `js/` / `css/`**（场景文件会按清单自动加载）。
+
+加完建议自检：
+
+```bash
+node tools/check-content.mjs   # 检查字段/清单是否正确，全 ✓ 再提交
+```
 
 ## 🌍 部署到 GitHub Pages
 
@@ -78,14 +83,17 @@ english-learning/
 │   ├── notes.js          # 逐句笔记（localStorage 持久化）
 │   └── app.js            # 路由 + 渲染 + 交互
 ├── data/
-│   ├── scenes-index.js   # 分类与场景目录
+│   ├── scenes-index.js   # 分类与场景清单（登记 id 的唯一入口）
 │   ├── glossary.js       # 重点词库（中文释义 + 常用搭配 + 音标）
 │   ├── common-words.js   # 内置基础词库（~200 词，简明中文）
 │   ├── dict-core.js      # 离线大词典（运行 tools/build-dict.mjs 生成，不手写）
 │   └── scenes/
-│       └── hotel-check-in.js   # 场景：酒店入住
+│       ├── _TEMPLATE.js       # 场景模板（复制它来新增场景）
+│       └── hotel-check-in.js  # 场景：酒店入住（示例）
 ├── tools/
-│   └── build-dict.mjs    # 一次性构建离线词典（下载 ECDICT → 过滤 → 生成 dict-core.js）
+│   ├── build-dict.mjs    # 一次性构建离线词典（下载 ECDICT → 过滤 → 生成 dict-core.js）
+│   └── check-content.mjs # 内容自检（校验场景字段/清单）
+├── CONTENT_GUIDE.md      # 内容编写指南（给维护者 / AI 模型）
 ├── README.md
 └── DEPLOY.md
 ```
